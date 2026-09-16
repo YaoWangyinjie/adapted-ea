@@ -431,25 +431,40 @@ def update_inference_inputs(
         sample_p
 ):
     prev_input_len = input_ids.shape[1]
-    # Map the best candidate indices to the original indices in the sequence
-    select_indices = (
-            retrieve_indices[best_candidate, : accept_length + 1] + prev_input_len
-    )
-    # Append the tokens from the best candidate to the input sequence
-    input_ids = torch.cat(
-        [input_ids, candidates[None, best_candidate, : accept_length + 1].to(input_ids.device)], dim=-1
-    )
-    # Update the past key values based on the selected tokens
-    # Source tensor that contains relevant past information based on the selected candidate
-    for past_key_values_data in past_key_values_data_list:
-        tgt = past_key_values_data[..., select_indices.to(past_key_values_data.device), :]
-        # Destination tensor where the relevant past information will be stored
-        dst = past_key_values_data[..., prev_input_len: prev_input_len + tgt.shape[-2], :]
-        # Copy relevant past information from the source to the destination
-        dst.copy_(tgt, non_blocking=True)
+    accepted_length = accept_length + 1
+    cache_capacity = min(cache.shape[-2] for cache in past_key_values_data_list)
+    available_length = cache_capacity - prev_input_len
+    if available_length <= 0:
+        return (input_ids, candidates[:, :0], retrieve_indices[:, :0],
+                None, None, new_token, None, None)
+    if accepted_length > available_length:
+        accepted_length = available_length
 
-    # Update the current length tensor (currently only support batch size is 1)
-    current_length_data.fill_(prev_input_len + tgt.shape[-2])
+    # Map the best candidate indices to the original indices in the sequence.
+    select_indices = retrieve_indices[best_candidate, :accepted_length] + prev_input_len
+    # Update the past key values based on the selected tokens.
+    for past_key_values_data in past_key_values_data_list:
+        device_indices = select_indices.to(past_key_values_data.device)
+        if device_indices.numel() and int(device_indices.max()) >= past_key_values_data.shape[-2]:
+            raise RuntimeError(
+                "EAGLE KV cache source index exceeds capacity: "
+                f"max_index={int(device_indices.max())}, capacity={past_key_values_data.shape[-2]}"
+            )
+        tgt = past_key_values_data[..., device_indices, :]
+        end = prev_input_len + tgt.shape[-2]
+        if end > past_key_values_data.shape[-2]:
+            raise RuntimeError(
+                "EAGLE KV cache destination exceeds capacity: "
+                f"start={prev_input_len}, length={tgt.shape[-2]}, "
+                f"capacity={past_key_values_data.shape[-2]}"
+            )
+        past_key_values_data[..., prev_input_len:end, :].copy_(tgt, non_blocking=True)
+
+    # Append the tokens from the best candidate to the input sequence.
+    input_ids = torch.cat(
+        [input_ids, candidates[None, best_candidate, :accepted_length].to(input_ids.device)], dim=-1
+    )
+    current_length_data.fill_(prev_input_len + accepted_length)
 
     retrieve_hidden_state_new = hidden_state_new[:, retrieve_indices]
     accept_hidden_state_new = retrieve_hidden_state_new[:, best_candidate, : accept_length + 1]

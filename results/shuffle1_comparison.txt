@@ -1,0 +1,169 @@
+shuffle_1 Baseline 与 Persistent 在线训练结果对比
+====================================================
+
+实验配置
+--------
+数据集：eagle/data/shuffle_1/question.jsonl
+数据量：720 个 question
+
+Baseline：
+- 实验名：shuffle1_noupdate
+- 在线训练：关闭
+- max-new-token：512
+- total-token：60
+- depth：5
+- top-k：10
+- temperature：0.0
+
+Persistent 在线训练：
+- 实验名：shuffle1_persistent_lr1e-6_v2
+- weight-mode：persistent
+- cache-scope：stream
+- scope：head_only
+- objective：kl
+- adaptation-lr：1e-6
+- gradient-clip-norm：0.2
+- anchor-weight：1e-3
+- max-length：2048
+- max-new-token：512
+- total-token：60
+- depth：5
+- top-k：10
+- temperature：0.0
+
+一、总体结果
+------------
+说明：
+- acceptance rate = total_accept_length / total_drafted_tokens
+- avg accepted length = total_accept_length / total_steps
+- throughput = new_tokens / time
+- 在线实验有 2 个超长 prompt 被跳过，因此在线训练的正常 turn 数为 798；baseline 为 800。
+- 下表按照各自 stats 文件中的有效记录汇总。
+
+指标                                      Baseline             Persistent 在线训练       变化
+------------------------------------------------------------------------------------------------
+统计 turn 数                              800                  798                    -2
+Accepted tokens                           312,238              312,505                +267 (+0.086%)
+Drafted tokens                            539,675              540,642                +967 (+0.179%)
+Speculative steps                         77,427               77,557                 +130 (+0.168%)
+Generated tokens                          388,100              388,513                +413 (+0.106%)
+Acceptance rate                           57.8567%             57.8026%               -0.0541 pp
+Avg accepted length                       4.0327               4.0294                 -0.0033
+统计总耗时                                3,756.63 s           4,143.90 s             +387.27 s (+10.31%)
+Throughput                                103.31 tok/s         93.76 tok/s            -9.56 tok/s (-9.25%)
+平均每个正常 turn 耗时                   4.6958 s             5.1929 s               +0.4971 s (+10.59%)
+
+总体判断：
+1. Persistent 在线训练没有提高总体 acceptance rate，反而下降 0.0541 个百分点。
+2. Avg accepted length 由 4.0327 降至 4.0294，基本持平但方向略差。
+3. 在线训练使统计总耗时增加约 10.31%，吞吐下降约 9.25%。
+4. Accepted tokens 略有增加，但不足以抵消 adaptation 的额外计算成本。
+5. 在本次混合数据流和当前实现下，no-update 是更好的端到端推理配置。
+
+二、在线更新统计
+----------------
+- 正常在线 adaptation 更新次数：798
+- adaptation status=updated：798
+- adaptation loss 平均值：6.1584
+- adaptation loss 最小值：3.4128
+- adaptation loss 最大值：10.9212
+- positions_nonfinite_target：0
+- positions_nonfinite_draft：0
+- fragments_rejected_nonfinite_hidden：0
+
+这表明本次在线训练没有出现数值 nonfinite 或训练崩溃，但“更新能够稳定执行”不等于“更新能够带来推理收益”。本实验中更新成本存在，而总体 acceptance 和吞吐没有改善。
+
+三、不同领域/类别对比
+----------------------
+字段说明：
+- acc：acceptance rate
+- len：avg accepted length
+- tok/s：该类别统计的生成吞吐
+- delta acc：Persistent 在线训练相对 baseline 的 acceptance rate 变化，单位为百分点
+
+类别                         样本数       Baseline acc   Online acc     delta acc       Baseline len   Online len    Baseline tok/s   Online tok/s
+------------------------------------------------------------------------------------------------------------------------------------------------
+code                         80           68.949%         68.813%        -0.136 pp       4.8229         4.8138        120.263          112.576
+coding                       20           69.546%         68.348%        -1.198 pp       4.8639         4.7798        121.083          109.571
+extraction                   20           64.482%         64.066%        -0.416 pp       4.5095         4.4797        113.475          102.231
+humanities                   20           55.258%         54.809%        -0.449 pp       3.8400         3.8130         99.467           92.041
+legal_summarization         80           52.755%         52.834%        +0.079 pp       3.6750         3.6805         93.903           78.332
+math                         100           73.095%         73.168%        +0.073 pp       5.1162         5.1215        126.427          118.115
+medical_qa                  80           52.576%         52.726%        +0.150 pp       3.6613         3.6723         96.566           89.878
+qa                           80           53.828%         53.440%        -0.388 pp       3.7477         3.7206         98.466           93.435
+reasoning                    20           63.065%         63.853%        +0.788 pp       4.4077         4.4659        111.310          103.305
+roleplay                     20           52.189%         52.196%        +0.007 pp       3.6258         3.6293         95.661           89.843
+scientific_summarization    80           48.873%         49.106%        +0.233 pp       3.3866         3.4040         88.196           74.209
+stem                         20           59.096%         58.432%        -0.664 pp       4.1205         4.0721        105.999           97.355
+summarization                80           53.253%         53.370%        +0.117 pp       3.7133         3.7212         96.409           86.133
+writing                      20           61.933%         61.502%        -0.431 pp       4.3231         4.2928        109.947          101.946
+
+类别结果解读：
+1. 有正向趋势的类别：
+   - reasoning：+0.788 pp，是本次提升最大的类别；avg accepted length 也由 4.4077 提升到 4.4659。
+   - scientific_summarization：+0.233 pp。
+   - medical_qa：+0.150 pp。
+   - summarization：+0.117 pp。
+   - legal_summarization：+0.079 pp。
+   - math：+0.073 pp，avg accepted length 由 5.1162 提升到 5.1215。
+   - roleplay 基本持平，仅 +0.007 pp。
+
+2. 退化较明显的类别：
+   - coding：-1.198 pp，是下降最大的类别；avg accepted length 由 4.8639 降至 4.7798。
+   - stem：-0.664 pp。
+   - humanities：-0.449 pp。
+   - writing：-0.431 pp。
+   - extraction：-0.416 pp。
+   - qa：-0.388 pp。
+   - code：-0.136 pp。
+
+3. 吞吐方面，所有类别的 online tok/s 都低于 baseline。即使某些类别 acceptance rate 有小幅提升，也没有转化为端到端吞吐收益。
+
+4. 类别结果显示 persistent 更新存在领域依赖和潜在负迁移：reasoning、数学、医学问答、科学摘要等类别有小幅正向趋势，但 coding、stem、humanities、writing 等类别出现退化。
+
+四、跳过的超长 prompt
+----------------------
+在线训练使用 max-length=2048。以下题目在调用模型前被识别为 prompt 超出 cache 容量，因此记录后跳过：
+
+1. qid=474
+   - dataset_index=278
+   - category=scientific_summarization
+   - prompt_tokens=2263
+   - max_length=2048
+   - reason=prompt_exceeds_cache_capacity
+
+2. qid=144
+   - dataset_index=461
+   - category=legal_summarization
+   - prompt_tokens=2106
+   - max_length=2048
+   - reason=prompt_exceeds_cache_capacity
+
+这些记录位于：
+shuffle1_persistent_lr1e-6_v2_failures.jsonl
+
+五、最终结论与后续建议
+----------------------
+最终结论：
+- 本次 shuffle_1 混合跨领域数据实验没有证明 persistent lr=1e-6 能改善总体 acceptance rate 或吞吐。
+- 在线训练增加了约 10.31% 的统计耗时，吞吐下降约 9.25%。
+- 领域级结果存在正负分化，说明统一 persistent 更新可能发生领域负迁移。
+- 当前结果支持将 no-update 作为默认推理配置，而不是无条件启用 persistent adaptation。
+- reasoning、math、medical_qa、scientific_summarization 等方向可以作为后续有针对性的 adaptation 候选；coding、stem、humanities、writing 等方向需要增加保护机制。
+
+后续实验建议：
+1. 增加至少 3 个随机 seed，并使用 qid 对齐的 paired bootstrap 或置信区间分析。
+2. 对 persistent adaptation 增加 category gating，只在稳定受益类别启用更新。
+3. 引入 bounded replay、recent+anchor replay、EMA acceptance 监控和 validation guard。
+4. 对 acceptance 下降或参数漂移超限的类别自动 rollback 或暂停更新。
+5. 分别对受益类别和退化类别重新运行更大样本量实验，避免当前每类 20 条样本带来的偶然性。
+6. 进一步按 prompt length、output length、turn、领域切换位置分析，区分真正的领域适应收益和请求顺序效应。
+
+关联结果文件
+------------
+- shuffle1_noupdate.jsonl
+- shuffle1_noupdate_stats.jsonl
+- shuffle1_persistent_lr1e-6_v2.jsonl
+- shuffle1_persistent_lr1e-6_v2_stats.jsonl
+- shuffle1_persistent_lr1e-6_v2_failures.jsonl
+- shuffle1_persistent_lr1e-6_v2.log

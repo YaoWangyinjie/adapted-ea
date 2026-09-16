@@ -1,0 +1,4 @@
+{
+  "experiment": "billsum_noupdate",
+  "rows": 80
+}

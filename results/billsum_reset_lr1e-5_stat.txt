@@ -1,0 +1,4 @@
+{
+  "experiment": "billsum_reset_lr1e-5",
+  "rows": 80
+}

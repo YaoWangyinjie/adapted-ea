@@ -1,0 +1,260 @@
+EA2 四数据集 Persistent lr=1e-6 与 No-update Baseline 对比报告
+================================================================
+
+一、实验范围
+============
+
+数据集与 GPU 分配：
+- GPU 0：gsm8k，80 题
+- GPU 1：pubmed，80 题
+- GPU 2：pubmed_qa，80 题
+- GPU 3：sum，80 题
+
+共完成 8 个实验：
+- 4 个 persistent 在线训练实验
+- 4 个 no-update baseline 实验
+
+两阶段均已完整结束，四张 GPU 已释放。所有日志均未发现 OOM、Traceback、RuntimeError、rollback、status=failed 或 generation failed。
+
+二、统一实验配置
+================
+
+模型：
+- evaluator：eagle.evaluation.gen_ea_answer_ea2
+- base model：DeepSeek-R1-Distill-Llama-8B
+- EA model：EAGLE3-DeepSeek-R1-Distill-LLaMA-8B
+
+生成参数：
+- max-new-token：512
+- max-length：2048
+- total-token：60
+- depth：5
+- top-k：10
+- temperature：0.0
+
+Persistent 在线训练参数：
+- weight-mode：persistent
+- cache-scope：stream
+- scope：head_only
+- objective：kl
+- adaptation-lr：1e-6
+- gradient-clip-norm：0.2
+- anchor-weight：1e-3
+
+Baseline：
+- --no-update
+- weight-mode 使用 persistent，仅用于避免 no-update 下无意义的 reset 初始化；不会收集 fragment、反向传播或更新权重。
+
+指标定义：
+- acceptance rate = total_accept_length / total_drafted_tokens
+- avg accepted length = total_accept_length / total_steps
+- throughput = new_tokens / time
+
+三、逐数据集总体结果
+====================
+
+数据集       指标                    Baseline          Persistent 1e-6     变化
+----------------------------------------------------------------------------------
+GSM8K        Acceptance rate         72.5250%          72.6515%             +0.1265 pp
+             Avg accepted length     5.0764            5.0853               +0.0090
+             Throughput              125.33 tok/s      114.89 tok/s         -8.33%
+             总统计耗时              269.14 s          293.42 s             +9.02%
+             有效记录                80                80
+
+PubMed       Acceptance rate         48.8735%          49.0303%             +0.1568 pp
+             Avg accepted length     3.3866            3.3984               +0.0118
+             Throughput               87.28 tok/s       73.43 tok/s        -15.87%
+             总统计耗时              419.70 s          498.94 s            +18.88%
+             有效记录                79                79
+
+PubMedQA     Acceptance rate         52.5762%          52.8454%             +0.2692 pp
+             Avg accepted length     3.6613            3.6809               +0.0196
+             Throughput               95.36 tok/s       86.32 tok/s         -9.48%
+             总统计耗时              428.48 s          473.35 s            +10.47%
+             有效记录                80                80
+
+SUM          Acceptance rate         53.2527%          53.3495%             +0.0969 pp
+             Avg accepted length     3.7133            3.7197               +0.0064
+             Throughput               95.09 tok/s       85.55 tok/s        -10.03%
+             总统计耗时              423.60 s          470.87 s            +11.16%
+             有效记录                80                80
+
+四数据集加权汇总：
+- 有效记录：319
+- Baseline acceptance rate：55.3387%
+- Persistent acceptance rate：55.5073%
+- Acceptance 变化：+0.1686 个百分点
+- Baseline avg accepted length：3.8535
+- Persistent avg accepted length：3.8657
+- Avg accepted length 变化：+0.0122
+- Baseline throughput：98.32 tok/s
+- Persistent throughput：87.23 tok/s
+- Throughput 变化：-11.28%
+- Baseline 总统计耗时：1540.92 s
+- Persistent 总统计耗时：1736.59 s
+- 总统计耗时变化：+12.70%
+
+四、底层计数对比
+================
+
+GSM8K：
+- Baseline：accepted=28,255，drafted=38,959，steps=5,566，new_tokens=33,732
+- Persistent：accepted=28,244，drafted=38,876，steps=5,554，new_tokens=33,711
+- Persistent 通过减少 drafted tokens 和 speculative steps 提高了比例指标，但 accepted token 绝对数没有增加。
+
+PubMed：
+- Baseline：accepted=28,373，drafted=58,054，steps=8,378，new_tokens=36,632
+- Persistent：accepted=28,390，drafted=57,903，steps=8,354，new_tokens=36,636
+- accepted token 略增，同时 drafted tokens 和 steps 减少，因此 acceptance 和 avg length 均改善。
+
+PubMedQA：
+- Baseline：accepted=32,245，drafted=61,330，steps=8,807，new_tokens=40,860
+- Persistent：accepted=32,278，drafted=61,080，steps=8,769，new_tokens=40,860
+- 在生成 token 数完全一致时，Persistent 使用更少的 drafted tokens 和 speculative steps，是四个数据集中最清晰的正向信号。
+
+SUM：
+- Baseline：accepted=31,860，drafted=59,828，steps=8,580，new_tokens=40,281
+- Persistent：accepted=31,863，drafted=59,725，steps=8,566，new_tokens=40,284
+- 改善方向为正，但绝对幅度很小。
+
+四数据集合计：
+- Baseline：accepted=120,733，drafted=218,171，steps=31,331，new_tokens=151,505
+- Persistent：accepted=120,775，drafted=217,584，steps=31,243，new_tokens=151,491
+- Persistent accepted tokens 增加 42，drafted tokens 减少 587，steps 减少 88。
+
+五、在线训练稳定性
+==================
+
+数据集       成功更新数    Mean loss    Min loss    Max loss    Rollback
+--------------------------------------------------------------------------
+GSM8K        80            6.0374       4.6231      7.9932      0
+PubMed       79            5.2160       4.2900      6.0935      0
+PubMedQA     80            5.2795       4.4114      6.0200      0
+SUM          80            4.7715       3.9595      6.3536      0
+
+所有 319 个有效请求均为 adaptation status=updated，没有更新失败或 rollback。
+日志未发现 target、draft 或 hidden nonfinite 导致的失败。
+
+前后半段 adaptation loss：
+- GSM8K：5.9432 -> 6.1317，后半段略升
+- PubMed：5.2253 -> 5.2070，基本稳定
+- PubMedQA：5.3036 -> 5.2553，略降
+- SUM：4.7604 -> 4.7826，基本稳定
+
+这些结果说明优化过程数值稳定，但 loss 变化不等价于 acceptance 或吞吐收益。
+
+六、流位置四分位分析
+====================
+
+下表为每个数据集按输入顺序切成四段后，Persistent 相对 Baseline 的 acceptance rate 变化。
+
+数据集       Q1             Q2             Q3             Q4
+----------------------------------------------------------------
+GSM8K        +0.1786 pp     -0.0071 pp     +0.2432 pp     +0.1110 pp
+PubMed       +0.0451 pp     +0.2275 pp     +0.2203 pp     +0.1273 pp
+PubMedQA     +0.2184 pp     +0.4666 pp     +0.0126 pp     +0.3847 pp
+SUM          -0.0940 pp     +0.1540 pp     +0.4396 pp     -0.0982 pp
+
+趋势判断：
+1. PubMed 在四个区间都为正，方向最稳定，但吞吐成本也是最高的。
+2. PubMedQA 四个区间都为正，是 acceptance 收益最强且较一致的数据集。
+3. GSM8K 除 Q2 基本持平外均为正，说明数学任务存在正向信号，但没有随 stream position 单调增强。
+4. SUM 在 Q1 和 Q4 为负、Q2 和 Q3 为正，收益不稳定，且末段没有保持中段优势。
+5. 所有数据集都没有呈现“越训练越明显改善”的严格单调趋势，因此当前结果不能证明存在持续累积的长线增益。
+
+七、超长 Prompt 与公平性
+========================
+
+PubMed 中有 1 个样本超过 max-length=2048：
+- qid=74
+- dataset_index=74
+- category=scientific_summarization
+- prompt_tokens=2263
+- reason=prompt_exceeds_cache_capacity
+
+该样本在 Persistent 和 Baseline 中均被同样跳过，因此 PubMed 的 79 条有效记录仍然是严格对齐的公平比较。
+GSM8K、PubMedQA 和 SUM 均无跳过样本。
+
+八、核心结论
+============
+
+1. Acceptance 层面：
+   - 四个数据集的 Persistent acceptance rate 均高于各自 Baseline。
+   - 收益从高到低为：PubMedQA +0.2692 pp、PubMed +0.1568 pp、GSM8K +0.1265 pp、SUM +0.0969 pp。
+   - 四数据集合计提升 +0.1686 pp。
+
+2. Avg accepted length 层面：
+   - 四个数据集均有提升。
+   - PubMedQA 提升最大，为 +0.0196。
+   - 其余数据集提升均小于 0.012。
+
+3. 吞吐层面：
+   - 四个数据集全部下降。
+   - GSM8K -8.33%，PubMed -15.87%，PubMedQA -9.48%，SUM -10.03%。
+   - 四数据集合计下降 11.28%。
+   - 当前 adaptation 成本明显大于 speculative decoding 指标改善带来的速度收益。
+
+4. 最有希望的数据集：
+   - PubMedQA 是本轮最好的在线适应对象：acceptance 和 avg accepted length 提升最大，四个流区间均为正，且生成 token 数与 baseline 完全一致。
+   - PubMed 的正向趋势较稳定，但额外耗时最大，端到端代价明显。
+   - GSM8K 证明数学推理存在小幅正向信号，但样本量仅 80，且没有随长线更新单调改善。
+   - SUM 收益最小且流位置波动明显，当前证据较弱。
+
+5. 对 persistent lr=1e-6 的总体评价：
+   - 相比 no-update，它在四个同领域数据流上都能小幅改善 draft acceptance 指标。
+   - 但当前实现每个请求都执行更新，导致端到端吞吐普遍下降约 8% 至 16%。
+   - 因此它目前适合作为研究型配置，而不是默认生产推理配置。
+
+九、后续建议
+============
+
+1. 优先扩大 PubMedQA 和 GSM8K 样本规模，至少运行多个 seed，并做 qid 对齐的 paired bootstrap 置信区间。
+2. 将 adaptation 从“每请求更新”改为条件更新，例如低 acceptance、固定间隔或领域稳定时才更新，以降低吞吐损失。
+3. 增加 adaptation_time 独立统计，区分 base inference、draft inference 和 backward/update 的实际成本。
+4. 对 PubMedQA 尝试每 N 个请求更新一次，寻找 acceptance 收益和吞吐之间的平衡点。
+5. 对 GSM8K 扩展到完整 train stream，并使用独立 test split 检查收益是否泛化，而不是只改善当前流。
+6. 继续实现 bounded replay、anchor replay、EMA acceptance guard 和自动 rollback，验证长线稳定性。
+7. SUM 暂不应作为优先领域；除非扩大样本后能证明中后段收益稳定，否则其小幅总体改善不足以支持部署。
+
+十、结果文件
+============
+
+GSM8K：
+- gsm8k_ea2_persistent_lr1e-6.jsonl
+- gsm8k_ea2_persistent_lr1e-6_stats.jsonl
+- gsm8k_ea2_persistent_lr1e-6_failures.jsonl
+- gsm8k_ea2_persistent_lr1e-6.log
+- gsm8k_ea2_noupdate.jsonl
+- gsm8k_ea2_noupdate_stats.jsonl
+- gsm8k_ea2_noupdate_failures.jsonl
+- gsm8k_ea2_noupdate.log
+
+PubMed：
+- pubmed_ea2_persistent_lr1e-6.jsonl
+- pubmed_ea2_persistent_lr1e-6_stats.jsonl
+- pubmed_ea2_persistent_lr1e-6_failures.jsonl
+- pubmed_ea2_persistent_lr1e-6.log
+- pubmed_ea2_noupdate.jsonl
+- pubmed_ea2_noupdate_stats.jsonl
+- pubmed_ea2_noupdate_failures.jsonl
+- pubmed_ea2_noupdate.log
+
+PubMedQA：
+- pubmed_qa_ea2_persistent_lr1e-6.jsonl
+- pubmed_qa_ea2_persistent_lr1e-6_stats.jsonl
+- pubmed_qa_ea2_persistent_lr1e-6_failures.jsonl
+- pubmed_qa_ea2_persistent_lr1e-6.log
+- pubmed_qa_ea2_noupdate.jsonl
+- pubmed_qa_ea2_noupdate_stats.jsonl
+- pubmed_qa_ea2_noupdate_failures.jsonl
+- pubmed_qa_ea2_noupdate.log
+
+SUM：
+- sum_ea2_persistent_lr1e-6.jsonl
+- sum_ea2_persistent_lr1e-6_stats.jsonl
+- sum_ea2_persistent_lr1e-6_failures.jsonl
+- sum_ea2_persistent_lr1e-6.log
+- sum_ea2_noupdate.jsonl
+- sum_ea2_noupdate_stats.jsonl
+- sum_ea2_noupdate_failures.jsonl
+- sum_ea2_noupdate.log

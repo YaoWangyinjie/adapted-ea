@@ -45,6 +45,11 @@ class KVCache:
             dim (int, optional): Dimension along which copying should be performed. Default is 2.
         """
         tgt = self.data.index_select(dim, indices)
+        if prev_length < 0 or prev_length + tgt.shape[dim] > self.data.shape[dim]:
+            raise RuntimeError(
+                f"KV cache copy exceeds capacity: start={prev_length}, "
+                f"length={tgt.shape[dim]}, capacity={self.data.shape[dim]}"
+            )
         dst = self.data.narrow(dim, prev_length, tgt.shape[dim])
         dst.copy_(tgt, non_blocking=True)
         self.current_length.fill_(prev_length + tgt.shape[dim])
@@ -60,7 +65,13 @@ class KVCache:
         Returns:
             torch.Tensor: The data tensor after concatenation up to the current length.
         """
-        dst = self.data.narrow(dim, self.current_length, tensor.shape[dim])
+        start = self.current_length.item()
+        if start < 0 or start + tensor.shape[dim] > self.data.shape[dim]:
+            raise RuntimeError(
+                f"KV cache append exceeds capacity: start={start}, "
+                f"length={tensor.shape[dim]}, capacity={self.data.shape[dim]}"
+            )
+        dst = self.data.narrow(dim, start, tensor.shape[dim])
         dst.copy_(tensor)
         self.current_length.add_(tensor.shape[dim])
         return torch.narrow(self.data, 2, 0, self.current_length)

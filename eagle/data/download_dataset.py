@@ -76,6 +76,27 @@ def conv_pubmed_qa(row, qid):
     }
 
 
+def conv_medmcqa(row, qid):
+    options = "\n".join(f"{label}. {row.get(label, '')}" for label in ("opa", "opb", "opc", "opd"))
+    answer = row.get("cop", row.get("answer_idx", ""))
+    return {"question_id": qid, "category": "medical_qa", "turns": [f"Question: {row['question'].strip()}\n\nOptions:\n{options}\n\nAnswer with the option letter and explanation."], "reference": [str(answer)]}
+
+
+def conv_medqa(row, qid):
+    options = row.get("options", {})
+    options_text = "\n".join(f"{k}. {v}" for k, v in options.items()) if isinstance(options, dict) else str(options)
+    return {"question_id": qid, "category": "medical_qa", "turns": [f"Question: {row['question'].strip()}\n\nOptions:\n{options_text}\n\nAnswer with the option letter and explanation."], "reference": [str(row.get("answer", ""))]}
+
+
+def conv_bioasq(row, qid):
+    body = row.get("body", row.get("question", "")).strip()
+    snippets = row.get("snippets", [])
+    context = "\n".join(s.get("text", "") for s in snippets if isinstance(s, dict))
+    answer = row.get("exact_answer", row.get("ideal_answer", ""))
+    prompt = f"Context:\n{context}\n\nQuestion: {body}" if context else f"Question: {body}"
+    return {"question_id": qid, "category": "biomedical_qa", "turns": [prompt], "reference": [str(answer)] if answer else []}
+
+
 def conv_xlsum(row, qid, lang):
     """XL-Sum: multilingual news article → summary."""
     text = row["text"].strip()
@@ -115,6 +136,21 @@ DATASETS = {
         "converter": conv_pubmed_qa,
         "output_dir": "pubmed_qa",
     },
+    "medmcqa": {
+        "loader": lambda: load_dataset("openlifescienceai/medmcqa", split="train"),
+        "converter": conv_medmcqa,
+        "output_dir": "medmcqa",
+    },
+    "medqa": {
+        "loader": lambda: load_dataset("bigbio/med_qa", "med_qa_en_source", split="train"),
+        "converter": conv_medqa,
+        "output_dir": "medqa",
+    },
+    "bioasq": {
+        "loader": lambda: load_dataset("bioasq", split="train"),
+        "converter": conv_bioasq,
+        "output_dir": "bioasq",
+    },
     **{
         f"xlsum_{lang}": {
             "loader": (lambda l: lambda: load_dataset(
@@ -139,6 +175,8 @@ def main():
                         help="Number of samples to take (default: 80)")
     parser.add_argument("--shuffle", action="store_true", default=True,
                         help="Shuffle before sampling (uses seed 42, default: True)")
+    parser.add_argument("--no-shuffle", action="store_true",
+                        help="Keep the original dataset order")
     parser.add_argument("--min_text_len", type=int, default=200,
                         help="Minimum character length of the turn text (filters very short entries)")
     parser.add_argument("--max_text_len", type=int, default=8000,
@@ -155,12 +193,12 @@ def main():
 
     if is_streaming:
         # streaming: shuffle with buffer, no len()
-        if args.shuffle:
+        if args.shuffle and not args.no_shuffle:
             ds = ds.shuffle(seed=42, buffer_size=1000)
         print(f"  Streaming mode (no total size known)")
     else:
         print(f"  Raw size: {len(ds)}")
-        if args.shuffle:
+        if args.shuffle and not args.no_shuffle:
             ds = ds.shuffle(seed=42)
 
     converter = cfg["converter"]

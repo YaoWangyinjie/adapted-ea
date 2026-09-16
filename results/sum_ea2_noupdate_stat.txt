@@ -1,0 +1,5 @@
+{
+  "experiment": "sum_ea2_noupdate",
+  "rows": 80,
+  "failures": 0
+}

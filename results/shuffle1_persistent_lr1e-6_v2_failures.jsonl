@@ -1,0 +1,2 @@
+{"qid": 474, "dataset_index": 278, "category": "scientific_summarization", "turn": 0, "prompt_tokens": 2263, "max_length": 2048, "reason": "prompt_exceeds_cache_capacity", "status": "skipped", "experiment": "shuffle1_persistent_lr1e-6_v2"}
+{"qid": 144, "dataset_index": 461, "category": "legal_summarization", "turn": 0, "prompt_tokens": 2106, "max_length": 2048, "reason": "prompt_exceeds_cache_capacity", "status": "skipped", "experiment": "shuffle1_persistent_lr1e-6_v2"}

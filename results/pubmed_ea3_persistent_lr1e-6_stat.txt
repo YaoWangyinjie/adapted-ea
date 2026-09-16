@@ -1,0 +1,7 @@
+{
+  "experiment": "pubmed_ea3_persistent_lr1e-6",
+  "rows": 80,
+  "failures": 1,
+  "strategy": "persistent_sliding_window_anchor_guard",
+  "learning_rate": 1e-06
+}

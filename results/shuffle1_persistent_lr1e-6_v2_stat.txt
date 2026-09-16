@@ -1,0 +1,5 @@
+{
+  "experiment": "shuffle1_persistent_lr1e-6_v2",
+  "rows": 800,
+  "failures": 2
+}

@@ -1,0 +1,5 @@
+{
+  "experiment": "pubmed_qa_ea2_persistent_lr1e-6",
+  "rows": 80,
+  "failures": 0
+}

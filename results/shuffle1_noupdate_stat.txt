@@ -1,0 +1,4 @@
+{
+  "experiment": "shuffle1_noupdate",
+  "rows": 800
+}
