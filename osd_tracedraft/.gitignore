@@ -1,0 +1,22 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Local experiment products; source, configuration and licenses remain versioned.
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.zip
+*.log
+.env
+.venv*/
+results/
+outputs/
+checkpoints/
+RUNNING.lock
+/local_smoke_4060/*
+!/local_smoke_4060/README.md
+!/local_smoke_4060/fix_validation/
+/local_smoke_4060/fix_validation/*
+!/local_smoke_4060/fix_validation/README.md

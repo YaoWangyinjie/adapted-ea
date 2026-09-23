@@ -1,0 +1,2 @@
+# Keep source and shell scripts portable across Windows and Linux.
+* text=auto eol=lf

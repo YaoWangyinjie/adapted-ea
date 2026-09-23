@@ -1,0 +1,19 @@
+{
+  "model_profile": "vicuna13b",
+  "target": "/path/to/vicuna-13b-v1.3",
+  "draft": "/path/to/matching-vicuna-eagle3",
+  "questions": "/path/to/mt_bench/question.jsonl",
+  "output": "/results/vicuna13b_mtbench",
+  "variant": "hedge",
+  "block_size": 40,
+  "lr_1": 0.0002,
+  "lr_2": 0.0001,
+  "lr_3": 0.0004,
+  "epochs": 2,
+  "batch_size": 2,
+  "merge_precision": "fp32",
+  "trace_mode": "reset",
+  "trace_lr": 1e-05,
+  "trace_validation_guard": true,
+  "verify_greedy": 2
+}

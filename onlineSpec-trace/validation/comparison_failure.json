@@ -1,0 +1,29 @@
+{
+  "status": "invalid_pair",
+  "reason": "prompt_or_output_mismatch",
+  "speedup_reported": false,
+  "reference": "E:\\实验室\\Adapted_ea\\adapted-ea\\onlineSpec-trace\\validation\\real_8b\\onlinespec",
+  "candidate": "E:\\实验室\\Adapted_ea\\adapted-ea\\onlineSpec-trace\\validation\\real_8b\\onlinespec_trace",
+  "mismatched_turns": [
+    {
+      "question_id": 83,
+      "turn": 0,
+      "reference_tokens": 32,
+      "candidate_tokens": 32,
+      "different_positions": 2,
+      "first_differences": [
+        {
+          "index": 29,
+          "reference": 719,
+          "candidate": 323
+        },
+        {
+          "index": 31,
+          "reference": 617,
+          "candidate": 1205
+        }
+      ]
+    }
+  ],
+  "explanation": "Full outputs differ. Inspect raw answers and target precision; no speedup is emitted."
+}

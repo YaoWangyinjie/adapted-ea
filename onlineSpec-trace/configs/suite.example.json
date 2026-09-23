@@ -1,0 +1,56 @@
+{
+  "output_root": "/results/onlinespec_trace",
+  "seeds": [
+    0
+  ],
+  "models": [
+    {
+      "name": "deepseek",
+      "profile": "deepseek",
+      "target": "/path/to/DeepSeek-R1-Distill-Llama-8B",
+      "draft": "/path/to/matching-deepseek-eagle3"
+    },
+    {
+      "name": "vicuna13b",
+      "profile": "vicuna13b",
+      "target": "/path/to/vicuna-13b-v1.3",
+      "draft": "/path/to/matching-vicuna-eagle3"
+    }
+  ],
+  "datasets": [
+    {
+      "name": "mt_bench",
+      "path": "/path/to/mt_bench/question.jsonl",
+      "expected_questions": 80
+    },
+    {
+      "name": "pubmedqa",
+      "path": "/path/to/pubmedqa/question.jsonl",
+      "expected_questions": 500
+    },
+    {
+      "name": "math500",
+      "path": "/path/to/math500/question.jsonl",
+      "expected_questions": 500
+    },
+    {
+      "name": "theoremqa",
+      "path": "/path/to/theoremqa/question.jsonl",
+      "expected_questions": 500
+    },
+    {
+      "name": "lmsys",
+      "path": "/path/to/lmsys/question.jsonl",
+      "expected_questions": 500
+    }
+  ],
+  "settings": {
+    "variant": "hedge",
+    "block_size": 40,
+    "lr_1": 0.0002,
+    "lr_2": 0.0001,
+    "lr_3": 0.0004,
+    "epochs": 2,
+    "verify_greedy": 2
+  }
+}

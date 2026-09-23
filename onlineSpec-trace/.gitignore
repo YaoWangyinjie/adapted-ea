@@ -1,0 +1,21 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+RUNNING.lock
+results/
+validation/real_8b/
+*.zip
+
+# Local experiment products; source, configuration and licenses remain versioned.
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.zip
+*.log
+.env
+.venv*/
+results/
+outputs/
+checkpoints/
+RUNNING.lock

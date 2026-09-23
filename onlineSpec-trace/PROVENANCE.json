@@ -1,0 +1,158 @@
+{
+  "onlinespec_commit": "e58f82eb3f3adca3a686211236bf4f6e9e7e3a2b",
+  "upstream_files": [
+    {
+      "file": "README.md",
+      "sha256": "50a362f165396b2c89ad9d45405371ee0a47a81a6fe5bff3566cb93a8f76e625"
+    },
+    {
+      "file": "EAGLE/pipeline_eagle3_hedge.py",
+      "sha256": "d32ff5be1408266f51b3128d0e1af290f3554bf082520db6c67f990164c0027b"
+    },
+    {
+      "file": "EAGLE/pipeline_eagle3_ens.py",
+      "sha256": "5e465550c419d7f31a58d209b53d6858ac94e4e1bdaa134126cc8307c0ce0a4b"
+    },
+    {
+      "file": "EAGLE/traineagle3.py",
+      "sha256": "9f49892c7af4727ff17b256b09373cd7c69ddb4399713500cf6fb0e37c6af926"
+    },
+    {
+      "file": "EAGLE/train_eagle3/cnets.py",
+      "sha256": "da69cfeb680f29766738a05325f3f46f4945a1577f65e8115f61b721ef93fe11"
+    },
+    {
+      "file": "EAGLE/script/EAGLE-3/eagle3-ens.sh",
+      "sha256": "783b1fe00c256e1811f902eb9af1693bb420fb639adf4fbe1408c7ec181ab1dd"
+    }
+  ],
+  "core_files": [
+    {
+      "file": "onlinespec_trace/core/__init__.py",
+      "original": "osd_tracedraft/__init__.py",
+      "original_sha256": "d650228c0cefad565e321ae29ca7f2a2ac0251ae38ab871d5e059916ff383890",
+      "sha256": "d650228c0cefad565e321ae29ca7f2a2ac0251ae38ab871d5e059916ff383890"
+    },
+    {
+      "file": "onlinespec_trace/core/config.py",
+      "original": "osd_tracedraft/config.py",
+      "original_sha256": "07739ae690de6b7b20545ee3119f6561fc5380b74b6d31525d0672a303473577",
+      "sha256": "07739ae690de6b7b20545ee3119f6561fc5380b74b6d31525d0672a303473577"
+    },
+    {
+      "file": "onlinespec_trace/core/checkpoints.py",
+      "original": "osd_tracedraft/checkpoints.py",
+      "original_sha256": "8d91f6634d871cef9418a3a2d5c9bfd3aec39f991bbd54c2ab2b5729c59ec5e9",
+      "sha256": "8d91f6634d871cef9418a3a2d5c9bfd3aec39f991bbd54c2ab2b5729c59ec5e9"
+    },
+    {
+      "file": "onlinespec_trace/core/io_utils.py",
+      "original": "osd_tracedraft/io_utils.py",
+      "original_sha256": "1ed75c221e24f456798e5086a85e42dcd804ca1075355b607d3e9091db2e9b5d",
+      "sha256": "1ed75c221e24f456798e5086a85e42dcd804ca1075355b607d3e9091db2e9b5d"
+    },
+    {
+      "file": "onlinespec_trace/core/metrics.py",
+      "original": "osd_tracedraft/metrics.py",
+      "original_sha256": "07d9c7ee64d3ebce5bccdeaa059102e3037928e49ca5a13dc3f69042620388ab",
+      "sha256": "07d9c7ee64d3ebce5bccdeaa059102e3037928e49ca5a13dc3f69042620388ab"
+    },
+    {
+      "file": "onlinespec_trace/core/models.py",
+      "original": "osd_tracedraft/models.py",
+      "original_sha256": "dcb38caaaeeb2127cfb313f5dfc8236f0fa3ba526b45eedf19bec0b84362a089",
+      "sha256": "71d006191a039c2e631d38b6c4d1451f66df28d890c5fc05959eb72f15c6c8bc"
+    },
+    {
+      "file": "onlinespec_trace/core/prompts.py",
+      "original": "osd_tracedraft/prompts.py",
+      "original_sha256": "3214d8eb2d0ecfa10117a56339b5af4c975c1374768963154979399c5154af8f",
+      "sha256": "3214d8eb2d0ecfa10117a56339b5af4c975c1374768963154979399c5154af8f"
+    },
+    {
+      "file": "onlinespec_trace/core/training.py",
+      "original": "osd_tracedraft/training.py",
+      "original_sha256": "c02259e807095adcc8193343acf5b128ae918d3a9419803575afe85f61e829dc",
+      "sha256": "77b7ff5d03dbe38fc9a49b9ce1d78ae43d1b7c543938fa74b7423c9bf5cb8eb7"
+    },
+    {
+      "file": "onlinespec_trace/core/worker.py",
+      "original": "osd_tracedraft/worker.py",
+      "original_sha256": "a375f1bc3efd31d89197697a0be0ac6c04cc8ffa8f3d60f12ba3ddda8c1a4597",
+      "sha256": "8c8e5ea61d5dfbc2a44f1a7ffa25e624b03a81dc6b239d1c669f4490a0ffb74b"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/choices.py",
+      "original": "osd_tracedraft/backend/choices.py",
+      "original_sha256": "5ab95137f63b61f756057927b2af427ffa0bc351384d99e334a9da853fcbfa7e",
+      "sha256": "5ab95137f63b61f756057927b2af427ffa0bc351384d99e334a9da853fcbfa7e"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/cnets.py",
+      "original": "osd_tracedraft/backend/cnets.py",
+      "original_sha256": "c74141cb4470634b80e5bb94050202908b84e35439790e6423712759f60ffa22",
+      "sha256": "c74141cb4470634b80e5bb94050202908b84e35439790e6423712759f60ffa22"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/configs.py",
+      "original": "osd_tracedraft/backend/configs.py",
+      "original_sha256": "14ae62877cd9ab12c9076fc70fe940714b9ca980865b00ba974de340df2d1ac5",
+      "sha256": "14ae62877cd9ab12c9076fc70fe940714b9ca980865b00ba974de340df2d1ac5"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/ea_model_4.py",
+      "original": "osd_tracedraft/backend/ea_model_4.py",
+      "original_sha256": "bafdf89faabc5aada55e7086a09188121d8edb5c5bd2377a15b98a7665800828",
+      "sha256": "bafdf89faabc5aada55e7086a09188121d8edb5c5bd2377a15b98a7665800828"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/kv_cache.py",
+      "original": "osd_tracedraft/backend/kv_cache.py",
+      "original_sha256": "5c8c24b1e9bab4648c6d3744489b999b8c0ef0d1472055286661b145e1f997c9",
+      "sha256": "5c8c24b1e9bab4648c6d3744489b999b8c0ef0d1472055286661b145e1f997c9"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/LICENSE",
+      "original": "osd_tracedraft/backend/LICENSE",
+      "original_sha256": "61f7b100e163f143023c26591dbd6e8cc8cdfdd0923107284d9b2115ad855784",
+      "sha256": "61f7b100e163f143023c26591dbd6e8cc8cdfdd0923107284d9b2115ad855784"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/modeling_llama_kv.py",
+      "original": "osd_tracedraft/backend/modeling_llama_kv.py",
+      "original_sha256": "5532b929c85f05bb6fe2346de561334ccf222e21d8741b433bffa90fcf65bf36",
+      "sha256": "5532b929c85f05bb6fe2346de561334ccf222e21d8741b433bffa90fcf65bf36"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/online_head.py",
+      "original": "osd_tracedraft/backend/online_head.py",
+      "original_sha256": "b216cb251bea037c480f4ee1b8897096109aabe96ea5ca960a858a0886a57301",
+      "sha256": "b216cb251bea037c480f4ee1b8897096109aabe96ea5ca960a858a0886a57301"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/SNAPSHOT.json",
+      "original": "osd_tracedraft/backend/SNAPSHOT.json",
+      "original_sha256": "3b52d95350f574ec744cf2655235d9cddb6a053a49f9972c39815e179a2eb990",
+      "sha256": "c4ab1b90ce1fd3af94bf51f002ba51d7a24c9ebe66ff98c800a0c936b26facda"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/utils.py",
+      "original": "osd_tracedraft/backend/utils.py",
+      "original_sha256": "800af2d9d72ad12434eef4b81a0b7757059408ebdb0bce8863c087e8e8f69a9b",
+      "sha256": "800af2d9d72ad12434eef4b81a0b7757059408ebdb0bce8863c087e8e8f69a9b"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/utils_c.py",
+      "original": "osd_tracedraft/backend/utils_c.py",
+      "original_sha256": "d907c708ce4e576e166958cf3dc13d91f35899fd0f31e23326594d7d9b2a5cc6",
+      "sha256": "d907c708ce4e576e166958cf3dc13d91f35899fd0f31e23326594d7d9b2a5cc6"
+    },
+    {
+      "file": "onlinespec_trace/core/backend/__init__.py",
+      "original": "osd_tracedraft/backend/__init__.py",
+      "original_sha256": "0ff9bc2677af88347665de773286c1b517a2eb41105df02491ca6e7f69c188fe",
+      "sha256": "0ff9bc2677af88347665de773286c1b517a2eb41105df02491ca6e7f69c188fe"
+    }
+  ],
+  "core_import_change": "Only Python import module paths renamed: osd_tracedraft -> onlinespec_trace.core; method identifiers unchanged."
+}

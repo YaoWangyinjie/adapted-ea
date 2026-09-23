@@ -1,0 +1,32 @@
+[
+  {
+    "checkpoint": "blocks/0000/merge/checkpoint",
+    "baseline": "f6da93c5274d4f2b8bffd5128df529230aa23c2c6ccff98bc91cc5692c913932",
+    "combined": "f6da93c5274d4f2b8bffd5128df529230aa23c2c6ccff98bc91cc5692c913932",
+    "identical": true
+  },
+  {
+    "checkpoint": "blocks/0001/merge/checkpoint",
+    "baseline": "e64c66d24aaf8bb7066549ce011fe4087351999f760e7771478d7b6c754bbf00",
+    "combined": "e64c66d24aaf8bb7066549ce011fe4087351999f760e7771478d7b6c754bbf00",
+    "identical": true
+  },
+  {
+    "checkpoint": "blocks/0000/learner_0/checkpoint",
+    "baseline": "8a5c91ef64ad22e6cebb5ca2116575400606fb7dba20aae314045df6048744f0",
+    "combined": "8a5c91ef64ad22e6cebb5ca2116575400606fb7dba20aae314045df6048744f0",
+    "identical": true
+  },
+  {
+    "checkpoint": "blocks/0000/learner_1/checkpoint",
+    "baseline": "91c90bca6dcb01c3d56081df2a4fc894253e1980338ff162bf8dab792f500dad",
+    "combined": "91c90bca6dcb01c3d56081df2a4fc894253e1980338ff162bf8dab792f500dad",
+    "identical": true
+  },
+  {
+    "checkpoint": "blocks/0000/learner_2/checkpoint",
+    "baseline": "cd4f31dbd7ab1c5cde616d3706ae8201ba3bccb044247effd34942fccc5231c4",
+    "combined": "cd4f31dbd7ab1c5cde616d3706ae8201ba3bccb044247effd34942fccc5231c4",
+    "identical": true
+  }
+]

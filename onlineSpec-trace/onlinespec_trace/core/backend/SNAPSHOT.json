@@ -1,0 +1,56 @@
+{
+  "files": [
+    {
+      "file": "cnets.py",
+      "source": "eagle/model/cnets.py",
+      "sha256": "c74141cb4470634b80e5bb94050202908b84e35439790e6423712759f60ffa22",
+      "upstream_sha256": "e887d3386407338bb141151262d5c856bf67026061cdf1f02de34cb612736264",
+      "local_changes": "Preserve FP32 output norm weights while returning activations in the original inference dtype."
+    },
+    {
+      "file": "configs.py",
+      "source": "eagle/model/configs.py",
+      "sha256": "14ae62877cd9ab12c9076fc70fe940714b9ca980865b00ba974de340df2d1ac5"
+    },
+    {
+      "file": "ea_model_4.py",
+      "source": "eagle/model/ea_model_4.py",
+      "sha256": "bafdf89faabc5aada55e7086a09188121d8edb5c5bd2377a15b98a7665800828",
+      "upstream_sha256": "eaa48c32622e77c1208656b7474c9a2e6d5769febe24978f2900aca2335b9ce7",
+      "local_changes": "Cross-device target verification for CPU draft tests; project only sampled prefill teacher positions."
+    },
+    {
+      "file": "online_head.py",
+      "source": "eagle/model/online_head.py",
+      "sha256": "b216cb251bea037c480f4ee1b8897096109aabe96ea5ca960a858a0886a57301",
+      "upstream_sha256": "7aacbf0a68131273a3b7d326723373c3b78310e4698f17a4f175f0a21028e6cc",
+      "local_changes": "Bounded teacher projection, basic/full diagnostics, inference-precision validation and transactional rollback."
+    },
+    {
+      "file": "modeling_llama_kv.py",
+      "source": "eagle/model/modeling_llama_kv.py",
+      "sha256": "5532b929c85f05bb6fe2346de561334ccf222e21d8741b433bffa90fcf65bf36"
+    },
+    {
+      "file": "kv_cache.py",
+      "source": "eagle/model/kv_cache.py",
+      "sha256": "5c8c24b1e9bab4648c6d3744489b999b8c0ef0d1472055286661b145e1f997c9"
+    },
+    {
+      "file": "utils.py",
+      "source": "eagle/model/utils.py",
+      "sha256": "800af2d9d72ad12434eef4b81a0b7757059408ebdb0bce8863c087e8e8f69a9b"
+    },
+    {
+      "file": "utils_c.py",
+      "source": "eagle/model/utils_c.py",
+      "sha256": "d907c708ce4e576e166958cf3dc13d91f35899fd0f31e23326594d7d9b2a5cc6"
+    },
+    {
+      "file": "choices.py",
+      "source": "eagle/model/choices.py",
+      "sha256": "5ab95137f63b61f756057927b2af427ffa0bc351384d99e334a9da853fcbfa7e"
+    }
+  ],
+  "modifications": "Local EAGLE-3/TraceDraft snapshot with documented fusion fixes; upstream hashes retained per modified file. Vendored in onlineSpec-trace with package imports renamed."
+}

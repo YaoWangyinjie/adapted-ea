@@ -1,0 +1,9 @@
+{
+  "local_tests_passed": 20,
+  "local_tests_failed": 0,
+  "portable_tests_passed": 19,
+  "portable_tests_skipped": 1,
+  "portable_skip": "external OnlineSPEC source comparison",
+  "runtime": "Python 3.12, torch 2.6.0+cpu, transformers 4.53.1",
+  "real_model_cuda_tested": false
+}

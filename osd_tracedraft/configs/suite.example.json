@@ -1,0 +1,77 @@
+{
+  "output_root": "/absolute/path/to/results/osd_tracedraft",
+  "methods": [
+    "baseline",
+    "tracedraft",
+    "osd",
+    "osd_tracedraft"
+  ],
+  "seeds": [
+    0
+  ],
+  "models": [
+    {
+      "name": "deepseek",
+      "profile": "deepseek",
+      "target": "/absolute/path/to/DeepSeek-R1-Distill-Llama-8B",
+      "draft": "/absolute/path/to/matching-deepseek-eagle3"
+    },
+    {
+      "name": "vicuna13b",
+      "profile": "vicuna13b",
+      "target": "/absolute/path/to/vicuna-13b-v1.3",
+      "draft": "/absolute/path/to/matching-vicuna13b-eagle3"
+    }
+  ],
+  "datasets": [
+    {
+      "name": "mt_bench",
+      "path": "eagle/data/mt_bench/question.jsonl",
+      "expected_questions": 80
+    },
+    {
+      "name": "pubmedqa",
+      "path": "/absolute/path/to/pubmedqa-500/question.jsonl",
+      "expected_questions": 500
+    },
+    {
+      "name": "gsm8k",
+      "path": "/absolute/path/to/gsm8k-500/question.jsonl",
+      "expected_questions": 500
+    },
+    {
+      "name": "billsum",
+      "path": "eagle/data/billsum/question.jsonl",
+      "expected_questions": 80
+    },
+    {
+      "name": "math500",
+      "path": "/absolute/path/to/math500/question.jsonl",
+      "expected_questions": 500
+    },
+    {
+      "name": "theoremqa",
+      "path": "/absolute/path/to/theoremqa/question.jsonl"
+    },
+    {
+      "name": "lmsys",
+      "path": "/absolute/path/to/lmsys-subset/question.jsonl"
+    }
+  ],
+  "settings": {
+    "osd_block_size": 40,
+    "osd_lr": 1e-05,
+    "osd_epochs": 2,
+    "osd_batch_size": 2,
+    "trace_lr": 1e-05,
+    "trace_mode": "reset",
+    "trace_source": "balanced",
+    "trace_update_round": 5,
+    "trace_every": 1,
+    "verify_greedy": 2,
+    "osd_guard": true,
+    "output_norm_fp32": true,
+    "trace_validation_guard": true,
+    "trace_diagnostics": "basic"
+  }
+}
