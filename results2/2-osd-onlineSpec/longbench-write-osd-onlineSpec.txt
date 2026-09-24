@@ -4,14 +4,13 @@ dataset: LongBench-Write
 一、osd 组
 方法                   接受率%  平均接受长度  吞吐速度(tok/s)  吞吐总量(tok)  时间(s)
 ---------------------  -------  ------------  ---------------  -------------  -------
-EAGLE3+OSD              22.702        1.3943            24.90          36874   1481.1
-EAGLE3+OSD+TraceDraft   23.074        1.4141            25.28          39924   1579.1
-  (EAGLE3+OSD+TraceDraft 更新/回退: 18/2)
+EAGLE3+OSD              28.094        1.7255            30.81         
+EAGLE3+OSD+TraceDraft   29.982        1.8370            32.85         
 
 相对基准提升
 对比                                 接受率提升%  平均长度提升%  吞吐提升%
 -----------------------------------  -----------  -------------  ---------
-EAGLE3+OSD+TraceDraft vs EAGLE3+OSD         1.64           1.42       1.55
+EAGLE3+OSD+TraceDraft vs EAGLE3+OSD       
 
 最大单题提升
   接受率: qid=61 方法=EAGLE3+OSD+TraceDraft 基线=14.6364 -> 16.1015  提升 +10.01%
@@ -21,14 +20,13 @@ EAGLE3+OSD+TraceDraft vs EAGLE3+OSD         1.64           1.42       1.55
 二、onlinespec 组
 方法                   接受率%  平均接受长度  吞吐速度(tok/s)  吞吐总量(tok)  时间(s)
 ---------------------  -------  ------------  ---------------  -------------  -------
-ENS-EAGLE3(hedge)       18.808        1.1708            18.93          38044   2009.5
-ENS-EAGLE3+TraceDraft   17.630        1.1167            18.59          38238   2057.4
-  (ENS-EAGLE3+TraceDraft 更新/回退: 18/2)
+ENS-EAGLE3              28.917        1.8001            31.10          
+ENS-EAGLE3+TraceDraft   29.461        1.8328            31.89         
 
 相对基准提升
 对比                                        接受率提升%  平均长度提升%  吞吐提升%
 ------------------------------------------  -----------  -------------  ---------
-ENS-EAGLE3+TraceDraft vs ENS-EAGLE3(hedge)        -6.26          -4.63      -1.83
+ENS-EAGLE3+TraceDraft vs ENS-EAGLE3(hedge)       
 
 最大单题提升
   接受率: qid=51 方法=ENS-EAGLE3+TraceDraft 基线=46.1929 -> 47.4787  提升 +2.78%
