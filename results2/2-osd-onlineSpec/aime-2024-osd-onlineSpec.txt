@@ -5,36 +5,26 @@ dataset: AIME-2024
 方法                 接受率%        平均接受长度      吞吐速度(tok/s)      吞吐总量(tok)    时间(s)
 --------------  -------  ------------  ---------------  -------------  -------
 OSD              46.383        2.4496            57.03          
-OSD+TraceDraft   47.083        2.4901            58.25          
+OSD+TraceDraft   49.437        2.6146            61.16          
 
 二、相对基线提升
 对比                          接受率提升%        平均长度提升%      吞吐提升%
 ---------------------  -----------  -------------  ---------
 OSD+TraceDraft vs OSD        
-三、最大单题提升
-指标                        方法    题号       基线      实验值      相对提升%
-------------  --------------  ----  -------  -------  ---------
-接受率           OSD+TraceDraft     3  34.6869  36.5093      +5.25
-平均接受长度        OSD+TraceDraft     3   1.8110   1.9091      +5.42
-吞吐速度          OSD+TraceDraft     3  46.0900  47.2804      +2.58
+
 
 一、平均指标
 方法                        接受率%        平均接受长度      吞吐速度(tok/s)      吞吐总量(tok)    时间(s)
 ---------------------  -------  ------------  ---------------  -------------  -------
 OnlineSPEC              48.995        2.5213           58.37         
-OnlineSPEC+TraceDraft   49.310        2.5391            58.56        
+OnlineSPEC+TraceDraft   51.776        2.6660            61.49        
 
 二、相对基线提升
 对比                                        接受率提升%        平均长度提升%      吞吐提升%
 -----------------------------------  -----------  -------------  ---------
 OnlineSPEC+TraceDraft vs OnlineSPEC     
 
-三、最大单题提升
-指标                               方法    题号       基线      实验值      相对提升%
-------------  ---------------------  ----  -------  -------  ---------
-接受率           OnlineSPEC+TraceDraft     3  35.6552  37.5960      +5.44
-平均接受长度        OnlineSPEC+TraceDraft     2   1.5769   1.6234      +2.95
-吞吐速度          OnlineSPEC+TraceDraft     2  42.5730  43.6475      +2.52
+
 
 实验参数
 方法                     max_new_tokens  max_length    dtype  total_token  depth  top_k  seed  osd_block_size  osd_lr  osd_epochs  osd_batch_size  osd_unroll  osd_decay  block_size    lr_1    lr_2    lr_3  epochs  batch_size  unroll  decay  hedge_temperature  merge_precision  trace_mode  trace_lr  trace_update_round  trace_every  trace_source  trace_prompt_positions  trace_response_positions
