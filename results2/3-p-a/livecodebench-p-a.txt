@@ -1,0 +1,32 @@
+dataset: LiveCodeBench
+显卡: NVIDIA A800
+
+一、平均指标
+方法           接受率%        平均接受长度      吞吐速度(tok/s)      吞吐总量(tok)    时间(s)
+--------  -------  ------------  ---------------  -------------  -------
+baseline   18.894        0.8648            22.46         855762  38109.9
+Reset      18.850        0.8796            22.64         834398  36859.3
+P          18.747        0.8670            22.45         838408  37342.3
+P+A        18.505        0.8478            22.17         845796  38145.5
+
+二、相对基线提升
+对比                      接受率提升%        平均长度提升%      吞吐提升%
+-----------------  -----------  -------------  ---------
+Reset vs baseline        -0.23          +1.71      +0.81
+P vs baseline            -0.78          +0.25      -0.01
+P+A vs baseline          -2.06          -1.96      -1.26
+
+三、最大单题提升
+指标               方法    题号       基线      实验值      相对提升%
+------------  -----  ----  -------  -------  ---------
+接受率           Reset     0  17.9913  27.5764     +53.28
+平均接受长度        Reset     0   0.8114   1.4448     +78.07
+吞吐速度          Reset     0  21.3196  40.4055     +89.52
+
+实验参数
+方法        max_new_tokens  max_length    dtype  total_token  depth  top_k  seed  learning_rate    source  prompt_weight  max_prompt_positions  max_response_positions  warmup_steps  update_every  train_steps      scope    precision  validation_fraction  gradient_clip  max_step_drift      anchor_weight  replay_mib  replay_positions  max_successful_updates
+--------  --------------  ----------  -------  -----------  -----  -----  ----  -------------  --------  -------------  --------------------  ----------------------  ------------  ------------  -----------  ---------  -----------  -------------------  -------------  --------------  -----------------  ----------  ----------------  ----------------------
+baseline           16384       18432  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02                0.0         0.0                 0                    None
+Reset              16384       18432  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02                0.0         0.0                 0                    None
+P                  16384       18432  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02                0.0         0.0                 0                    None
+P+A                16384       18432  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02  49183.11259820001         0.0                 0                    None
