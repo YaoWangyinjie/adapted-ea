@@ -1,0 +1,29 @@
+dataset: MT-Bench
+显卡: NVIDIA A800
+
+一、平均指标
+方法               接受率%        平均接受长度      吞吐速度(tok/s)      吞吐总量(tok)    时间(s)
+------------  -------  ------------  ---------------  -------------  -------
+P-once seed0   61.400        4.2847           100.79         136079   1350.1
+P-once seed1   61.461        4.2885           101.72         135710   1334.2
+P-once seed2   61.682        4.3044           101.71         135612   1333.3
+
+二、相对基线提升
+对比                                 接受率提升%        平均长度提升%      吞吐提升%
+----------------------------  -----------  -------------  ---------
+P-once seed1 vs P-once seed0        +0.10          +0.09      +0.92
+P-once seed2 vs P-once seed0        +0.46          +0.46      +0.91
+
+三、最大单题提升
+指标                      方法    题号       基线       实验值      相对提升%
+------------  ------------  ----  -------  --------  ---------
+接受率           P-once seed2    70  49.5098   61.5752     +24.37
+平均接受长度        P-once seed2    70   3.4354    4.2762     +24.48
+吞吐速度          P-once seed1    70  84.8189  101.0527     +19.14
+
+实验参数
+方法            max_new_tokens  max_length    dtype  total_token  depth  top_k  seed  learning_rate    source  prompt_weight  max_prompt_positions  max_response_positions  warmup_steps  update_every  train_steps      scope    precision  validation_fraction  gradient_clip  max_step_drift  anchor_weight  replay_mib  replay_positions  max_successful_updates
+------------  --------------  ----------  -------  -----------  -----  -----  ----  -------------  --------  -------------  --------------------  ----------------------  ------------  ------------  -----------  ---------  -----------  -------------------  -------------  --------------  -------------  ----------  ----------------  ----------------------
+P-once seed0            1024        4096  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                       1
+P-once seed1            1024        4096  float16           60      5     10     1          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                       1
+P-once seed2            1024        4096  float16           60      5     10     2          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                       1

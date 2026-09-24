@@ -1,0 +1,29 @@
+dataset: AIME-2024
+显卡: NVIDIA A800
+
+一、平均指标
+方法           接受率%        平均接受长度      吞吐速度(tok/s)      吞吐总量(tok)    时间(s)
+--------  -------  ------------  ---------------  -------------  -------
+baseline   41.187        2.0299            50.69         209074   4124.4
+Reset      41.666        2.0653            51.10         210581   4120.6
+P          42.236        2.1145            52.35         204807   3912.6
+
+二、相对基线提升
+对比                      接受率提升%        平均长度提升%      吞吐提升%
+-----------------  -----------  -------------  ---------
+Reset vs baseline        +1.16          +1.74      +0.81
+P vs baseline            +2.55          +4.17      +3.26
+
+三、最大单题提升
+指标              方法    题号       基线       实验值      相对提升%
+------------  ----  ----  -------  --------  ---------
+接受率              P    19  41.9919   65.1587     +55.17
+平均接受长度           P    19   2.0408    4.2563    +108.56
+吞吐速度             P    19  50.2444  101.2887    +101.59
+
+实验参数
+方法        max_new_tokens  max_length    dtype  total_token  depth  top_k  seed  learning_rate    source  prompt_weight  max_prompt_positions  max_response_positions  warmup_steps  update_every  train_steps      scope    precision  validation_fraction  gradient_clip  max_step_drift  anchor_weight  replay_mib  replay_positions  max_successful_updates
+--------  --------------  ----------  -------  -----------  -----  -----  ----  -------------  --------  -------------  --------------------  ----------------------  ------------  ------------  -----------  ---------  -----------  -------------------  -------------  --------------  -------------  ----------  ----------------  ----------------------
+baseline            8192       12288  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                    None
+Reset               8192       12288  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                    None
+P                   8192       12288  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                    None

@@ -1,243 +1,291 @@
 # -*- coding: utf-8 -*-
-# Generates results2/* txt files from raw run data. Unified metrics:
-#   acc%  = 100 * sum(total_accept_length) / sum(total_drafted_tokens)
-#   avg   = sum(total_accept_length) / sum(total_steps)          (excludes root)
-#   tps   = sum(new_tokens) / sum(generation_seconds + reset_seconds)
-import json, os, unicodedata
-ROOT = "/root/paddlejob/workspace/env_run/yw/adapted-ea/P0-results"
-OUT  = "/root/paddlejob/workspace/env_run/yw/adapted-ea/results2"
-GPU  = "NVIDIA H800"
+"""Deterministically generate the requested results2 reports from raw P0 data."""
+import json
+import unicodedata
+from pathlib import Path
 
-def dw(s):
-    return sum(2 if unicodedata.east_asian_width(c) in 'WF' else 1 for c in str(s))
-def pad(s, w, a='<'):
-    s = str(s); p = max(0, w - dw(s))
-    return (s + ' '*p) if a == '<' else (' '*p + s)
-def table(headers, rows, aligns=None):
-    n = len(headers)
-    if aligns is None: aligns = ['<'] + ['>']*(n-1)
-    w = [dw(h) for h in headers]
-    for r in rows:
-        for i, c in enumerate(r): w[i] = max(w[i], dw(c))
-    def line(r): return "  ".join(pad(r[i], w[i], aligns[i]) for i in range(n))
-    out = [line(headers), "  ".join("-"*w[i] for i in range(n))]
-    for r in rows: out.append(line(r))
-    return "\n".join(out)
+ROOT = Path("/root/paddlejob/workspace/env_run/yw/adapted-ea/P0-results")
+OUT = Path("/root/paddlejob/workspace/env_run/yw/adapted-ea/results2")
+SEL = ROOT / "selected_e34_20260923_014102"
+SHORT = ROOT / "targeted_short_20260924_023906/targeted_short/runs"
+FOLLOW = ROOT / "tracedraft_followup_20260924_132428"
+GPU = "NVIDIA A800"
+GENERATED = []
+PARSED = set()
 
-def load_rows(path):
+
+def width(value):
+    return sum(2 if unicodedata.east_asian_width(char) in "WF" else 1 for char in str(value))
+
+
+def table(headers, rows):
+    widths = [width(item) for item in headers]
+    for row in rows:
+        for index, item in enumerate(row):
+            widths[index] = max(widths[index], width(item))
+    def render(row):
+        return "  ".join(
+            (str(item).ljust(widths[index]) if index == 0 else str(item).rjust(widths[index]))
+            for index, item in enumerate(row)
+        )
+    return "\n".join([render(headers), "  ".join("-" * n for n in widths)] + [render(row) for row in rows])
+
+
+def read_json(path):
+    path = Path(path)
+    PARSED.add(path)
+    with path.open(encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def read_jsonl(path):
+    path = Path(path)
+    PARSED.add(path)
     rows = []
-    for l in open(path):
-        l = l.strip()
-        if not l: continue
-        r = json.loads(l)
-        if r.get("status") != "ok": continue
-        rows.append(r)
+    with path.open(encoding="utf-8") as handle:
+        for number, line in enumerate(handle, 1):
+            if line.strip():
+                rows.append(json.loads(line))
     return rows
-def qm(r):
-    acc = 100*r["total_accept_length"]/r["total_drafted_tokens"]
-    avg = r["total_accept_length"]/r["total_steps"]
-    tps = r["new_tokens"]/(r["generation_seconds"]+r.get("reset_seconds",0))
-    return acc, avg, tps
+
+
+def complete_rows(path):
+    rows = read_jsonl(path)
+    if not rows or any(row.get("status") != "ok" for row in rows):
+        raise ValueError(f"source is not complete: {path}")
+    required = {"total_accept_length", "total_drafted_tokens", "total_steps", "new_tokens", "generation_seconds"}
+    for row in rows:
+        missing = required - row.keys()
+        if missing:
+            raise ValueError(f"missing fields {sorted(missing)}: {path}")
+    return rows
+
+
+def key(row):
+    for name in ("stream_index", "qid", "question_id"):
+        if name in row:
+            return str(row[name])
+    raise ValueError("row has no alignment key")
+
+
+def metric(row):
+    elapsed = row["generation_seconds"] + row.get("reset_seconds", 0)
+    return (100 * row["total_accept_length"] / row["total_drafted_tokens"],
+            row["total_accept_length"] / row["total_steps"], row["new_tokens"] / elapsed)
+
+
 def pooled(rows):
-    A=sum(r["total_accept_length"] for r in rows); D=sum(r["total_drafted_tokens"] for r in rows)
-    S=sum(r["total_steps"] for r in rows); N=sum(r["new_tokens"] for r in rows)
-    T=sum(r["generation_seconds"]+r.get("reset_seconds",0) for r in rows)
-    return dict(acc=100*A/D, avg=A/S, tps=N/T, newtok=N, sec=T, n=len(rows))
-def g(a, b): return (a-b)/b*100 if b else 0.0
-def f2(x): return f"{x:.2f}"
-def f3(x): return f"{x:.3f}"
-def f4(x): return f"{x:.4f}"
+    accepted = sum(row["total_accept_length"] for row in rows)
+    drafted = sum(row["total_drafted_tokens"] for row in rows)
+    steps = sum(row["total_steps"] for row in rows)
+    tokens = sum(row["new_tokens"] for row in rows)
+    seconds = sum(row["generation_seconds"] + row.get("reset_seconds", 0) for row in rows)
+    return {"acc": 100 * accepted / drafted, "avg": accepted / steps,
+            "tps": tokens / seconds, "tokens": tokens, "seconds": seconds}
 
-def abs_table(order, agg):
-    rows = [[m, f3(agg[m]['acc']), f4(agg[m]['avg']), f2(agg[m]['tps']),
-             str(agg[m]['newtok']), f1(agg[m]['sec'])] for m in order]
-    return table(["方法", "接受率%", "平均接受长度", "吞吐速度(tok/s)", "吞吐总量(tok)", "时间(s)"], rows)
-def f1(x): return f"{x:.1f}"
-def rel_table(order, agg, base):
-    b = agg[base]; rows = []
-    for m in order:
-        if m == base: continue
-        rows.append([f"{m} vs {base}", f2(g(agg[m]['acc'], b['acc'])),
-                     f2(g(agg[m]['avg'], b['avg'])), f2(g(agg[m]['tps'], b['tps']))])
-    return table(["对比", "接受率提升%", "平均长度提升%", "吞吐提升%"], rows)
 
-def max_improve(perq, order, base, keyname="qid"):
-    # perq: method -> {qid: (acc,avg,tps)}
-    labels = [("接受率", 0), ("平均接受长度", 1), ("吞吐速度", 2)]
-    out = []
-    bq = perq[base]
-    for name, idx in labels:
-        best = None
-        for m in order:
-            if m == base: continue
-            for qid, vals in perq[m].items():
-                if qid not in bq: continue
-                bv = bq[qid][idx]; mv = vals[idx]
-                if bv <= 0: continue
-                gain = (mv-bv)/bv*100
-                if best is None or gain > best[0]:
-                    best = (gain, m, qid, bv, mv)
-        if best:
-            out.append(f"  {name}: {keyname}={best[2]} 方法={best[1]} "
-                       f"基线={best[3]:.4f} -> {best[4]:.4f}  提升 {best[0]:+.2f}%")
-    return "\n".join(out)
+def intersect(groups):
+    shared = set.intersection(*(set(map(key, rows)) for rows in groups.values()))
+    if not shared:
+        raise ValueError("empty source intersection")
+    return {name: [row for row in rows if key(row) in shared] for name, rows in groups.items()}
 
-def write_file(path, dataset, sections):
-    txt = f"dataset: {dataset}\n显卡: {GPU}\n\n" + "\n\n".join(sections) + "\n"
-    open(path, "w").write(txt)
-    print("wrote", path)
-DS = {"AIME-2025": "aime-2025", "LongBench-Write": "longbench-write"}
 
-def basic_dir(ds, sub): return f"{ROOT}/runs/deepseek_r1_distill_llama_8b/{ds}/seed_0/{sub}"
+def gain(value, base):
+    return 100 * (value - base) / base
+
+
+def sections(groups, order, base="baseline", extra=None):
+    groups = intersect(groups)
+    aggregates = {name: pooled(groups[name]) for name in order}
+    absolute = [[name, f"{data['acc']:.3f}", f"{data['avg']:.4f}", f"{data['tps']:.2f}",
+                 str(data["tokens"]), f"{data['seconds']:.1f}"] for name, data in aggregates.items()]
+    relative = [[f"{name} vs {base}", f"{gain(aggregates[name]['acc'], aggregates[base]['acc']):+.2f}",
+                 f"{gain(aggregates[name]['avg'], aggregates[base]['avg']):+.2f}",
+                 f"{gain(aggregates[name]['tps'], aggregates[base]['tps']):+.2f}"]
+                for name in order if name != base]
+    per_question = {name: {key(row): metric(row) for row in groups[name]} for name in order}
+    maximum = []
+    for label, index in (("接受率", 0), ("平均接受长度", 1), ("吞吐速度", 2)):
+        candidates = []
+        for name in order:
+            if name == base:
+                continue
+            for qid, values in per_question[name].items():
+                base_value = per_question[base][qid][index]
+                if base_value > 0:
+                    candidates.append((gain(values[index], base_value), name, qid, base_value, values[index]))
+        best = max(candidates)
+        maximum.append([label, best[1], best[2], f"{best[3]:.4f}", f"{best[4]:.4f}", f"{best[0]:+.2f}"])
+    result = ["一、平均指标\n" + table(["方法", "接受率%", "平均接受长度", "吞吐速度(tok/s)", "吞吐总量(tok)", "时间(s)"], absolute),
+              "二、相对基线提升\n" + table(["对比", "接受率提升%", "平均长度提升%", "吞吐提升%"], relative),
+              "三、最大单题提升\n" + table(["指标", "方法", "题号", "基线", "实验值", "相对提升%"], maximum)]
+    if extra:
+        result.append(extra(groups))
+    return result
+
+
+PARAM_KEYS = ("max_new_tokens", "max_length", "dtype", "total_token", "depth", "top_k", "seed",
+              "learning_rate", "source", "prompt_weight", "max_prompt_positions", "max_response_positions",
+              "warmup_steps", "update_every", "train_steps", "scope", "precision", "validation_fraction",
+              "gradient_clip", "max_step_drift", "anchor_weight", "replay_mib", "replay_positions",
+              "max_successful_updates")
+
+
+def parameters(manifests, labels):
+    rows = []
+    for label, path in zip(labels, manifests):
+        args = read_json(path).get("args", {})
+        rows.append([label] + [str(args.get(item, "-")) for item in PARAM_KEYS])
+    return "实验参数\n" + table(["方法"] + list(PARAM_KEYS), rows)
+
+
+def report(relative, dataset, groups, order, manifests, labels=None, extra=None, base="baseline"):
+    target = OUT / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    body = sections(groups, order, base=base, extra=extra)
+    body.append(parameters(manifests, labels or order))
+    target.write_text(f"dataset: {dataset}\n显卡: {GPU}\n\n" + "\n\n".join(body) + "\n", encoding="utf-8")
+    GENERATED.append(target)
+
+
+def paths(base, mapping):
+    return {label: complete_rows(Path(base) / sub / "stats.jsonl") for label, sub in mapping.items()}
+
+
+def manifests(base, mapping):
+    return [Path(base) / sub / "manifest.json" for sub in mapping.values()]
+
 
 def gen_basic():
-    for ds, slug in DS.items():
-        dirs = {"baseline": basic_dir(ds,"baseline"), "Reset": basic_dir(ds,"reset"),
-                "Persistent": basic_dir(ds,"persistent")}
-        order = ["baseline","Reset","Persistent"]
-        agg = {}; perq = {}
-        for m in order:
-            rows = load_rows(dirs[m]+"/stats.jsonl")
-            agg[m] = pooled(rows)
-            perq[m] = {r["qid"]: qm(r) for r in rows}
-        params = ("实验参数:\n"
-                  "  max-new-tokens: 16384\n  max-length: 32768\n  dtype: float16\n"
-                  "  draft tree: total-token=60, depth=5, top-k=10\n"
-                  "  scope: head_only  precision: master_fp32  warmup-steps=5, update-every=1, train-steps=1\n"
-                  "  learning-rate: Reset=1e-5, Persistent=1e-6\n  seed=0, questions=0..20")
-        secs = ["一、平均指标\n"+abs_table(order, agg),
-                "二、相对基线提升\n"+rel_table(order, agg, "baseline"),
-                "三、最大单题提升\n"+max_improve(perq, order, "baseline"),
-                params]
-        write_file(f"{OUT}/1-basic/{slug}-basic.txt", ds, secs)
+    aime = SEL / "side/runs/aime_2024"
+    amap = {"baseline": "baseline", "Reset": "reset", "P": "persistent.attempt_02"}
+    report("1-basic/aime-2024-basic.txt", "AIME-2024", paths(aime, amap), list(amap), manifests(aime, amap))
+    live = SEL / "side/livecodebench_16384/runs"
+    lmap = {"baseline": "baseline.attempt_01", "Reset": "reset", "P": "persistent"}
+    report("1-basic/livecodebench-basic.txt", "LiveCodeBench", paths(live, lmap), list(lmap), manifests(live, lmap))
+
 
 def gen_pa():
-    for ds, slug in DS.items():
-        agg = {}; perq = {}
-        srcs = {"baseline": basic_dir(ds,"baseline")+"/stats.jsonl",
-                "Reset": basic_dir(ds,"reset")+"/stats.jsonl",
-                "P": basic_dir(ds,"persistent")+"/stats.jsonl",
-                "P+A": f"{ROOT}/exp3/deepseek_r1_distill_llama_8b/{ds}/seed_0/p_a/stats.jsonl"}
-        order = ["baseline","Reset","P","P+A"]
-        for m in order:
-            rows = load_rows(srcs[m]); agg[m] = pooled(rows)
-            perq[m] = {r["qid"]: qm(r) for r in rows}
-        params = ("实验参数:\n"
-                  "  max-new-tokens: 16384\n  max-length: 32768\n  dtype: float16\n"
-                  "  draft tree: total-token=60, depth=5, top-k=10\n"
-                  "  P/P+A learning-rate: 1e-6 (= 主实验 P)\n"
-                  "  P+A 锚点: lambda(anchor-weight)=0.01, B(replay-mib)=0, m(replay-positions)=0, max-anchor-drift=0\n"
-                  "  seed=0, questions=0..20")
-        secs = ["一、平均指标\n"+abs_table(order, agg),
-                "二、相对基线提升\n"+rel_table(order, agg, "baseline"),
-                "三、最大单题提升\n"+max_improve(perq, order, "baseline"),
-                params]
-        write_file(f"{OUT}/3-p-a/{slug}-p-a.txt", ds, secs)
+    aime = SEL / "side/runs/aime_2024"
+    groups = paths(aime, {"baseline": "baseline", "Reset": "reset", "P": "persistent.attempt_02"})
+    groups["P+A"] = complete_rows(SHORT / "aime/p_a/attempt_01/stats.jsonl")
+    mfs = [aime / "baseline/manifest.json", aime / "reset/manifest.json",
+           aime / "persistent.attempt_02/manifest.json", SHORT / "aime/p_a/attempt_01/manifest.json"]
+    report("3-p-a/aime-2024-p-a.txt", "AIME-2024", groups, ["baseline", "Reset", "P", "P+A"], mfs)
+    streams = SEL / "runs/streams/pubmedqa500"
+    for order in (0, 1):
+        base = streams / f"order_{order}"
+        mapping = {"baseline": "baseline", "Reset": "reset_f1", "P": "p_f1", "P+A": "p_a"}
+        if order == 0:
+            mapping["P"] = "p_f1.attempt_03"
+            mapping["P+A"] = "p_a.attempt_03"
+        report(f"3-p-a/pubmedqa500-order{order}-p-a.txt", f"PubMedQA500 order {order}",
+               paths(base, mapping), list(mapping), manifests(base, mapping))
+
+
 def gen_freeze():
-    for ds, slug in DS.items():
-        srcs = {"baseline": basic_dir(ds,"baseline")+"/stats.jsonl",
-                "P": basic_dir(ds,"persistent")+"/stats.jsonl",
-                "P-once": f"{ROOT}/exp3/deepseek_r1_distill_llama_8b/{ds}/seed_0/p_once/stats.jsonl"}
-        order = ["baseline","P","P-once"]
-        agg = {}; perq = {}
-        for m in order:
-            rows = load_rows(srcs[m]); agg[m] = pooled(rows)
-            perq[m] = {r["qid"]: qm(r) for r in rows}
-        params = ("实验参数:\n"
-                  "  max-new-tokens: 16384\n  max-length: 32768\n  dtype: float16\n"
-                  "  draft tree: total-token=60, depth=5, top-k=10\n"
-                  "  learning-rate: 1e-6\n"
-                  "  P-once: freeze-after-successful-updates=1 (首次成功提交后冻结), lambda=0, B=0, m=0\n"
-                  "  seed=0, questions=0..20")
-        secs = ["一、平均指标\n"+abs_table(order, agg),
-                "二、相对基线提升\n"+rel_table(order, agg, "baseline"),
-                "三、最大单题提升\n"+max_improve(perq, order, "baseline"),
-                params]
-        write_file(f"{OUT}/4-freeze/{slug}-freeze.txt", ds, secs)
+    p_once = SEL / "runs/p_once"
+    for dataset, slug in (("MT-Bench", "mt-bench"), ("PubMedQA500", "pubmedqa500")):
+        key_name = "mt_bench" if slug == "mt-bench" else "pubmedqa"
+        groups = {}
+        mfs = []
+        order = []
+        for seed in (0, 1, 2):
+            name = f"P-once seed{seed}"
+            run = p_once / key_name / f"seed_{seed}"
+            groups[name] = complete_rows(run / "stats.jsonl")
+            mfs.append(run / "manifest.json")
+            order.append(name)
+        # Seed 0 is the comparison baseline when the experiment consists solely of three P-once seeds.
+        report(f"4-freeze/{slug}-freeze.txt", dataset, groups, order, mfs, base=order[0])
+    aime = SEL / "side/runs/aime_2024"
+    groups = paths(aime, {"baseline": "baseline", "P": "persistent.attempt_02"})
+    groups["P-once"] = complete_rows(SHORT / "aime/p_once/attempt_01/stats.jsonl")
+    mfs = [aime / "baseline/manifest.json", aime / "persistent.attempt_02/manifest.json",
+           SHORT / "aime/p_once/attempt_01/manifest.json"]
+    report("4-freeze/aime-2024-freeze.txt", "AIME-2024", groups,
+           ["baseline", "P", "P-once"], mfs)
+
+
+def switch_segments(groups):
+    rows = []
+    for name, values in groups.items():
+        for label, lo, hi in (("PubMedQA100", 0, 99), ("TheoremQA100", 100, 199)):
+            data = pooled([row for row in values if lo <= int(row["stream_index"]) <= hi])
+            rows.append([name, label, f"{data['acc']:.3f}", f"{data['avg']:.4f}", f"{data['tps']:.2f}"])
+    return "四、分段指标\n" + table(["方法", "数据段", "接受率%", "平均接受长度", "吞吐速度(tok/s)"], rows)
+
 
 def gen_switch():
-    orders_ds = {"aime_then_lbw": "AIME(math) -> LongBench-Write(long_form)",
-                 "lbw_then_aime": "LongBench-Write(long_form) -> AIME(math)"}
-    for sw, desc in orders_ds.items():
-        base = f"{ROOT}/exp4/deepseek_r1_distill_llama_8b/{sw}/seed_0"
-        srcs = {"baseline": f"{base}/baseline/stats.jsonl", "reset": f"{base}/reset/stats.jsonl",
-                "persistent": f"{base}/persistent/stats.jsonl", "p_a": f"{base}/p_a/stats.jsonl"}
-        order = ["baseline","reset","persistent","p_a"]
-        rowsm = {m: load_rows(srcs[m]) for m in order}
-        agg = {m: pooled(rowsm[m]) for m in order}
-        perq = {m: {r["stream_index"]: qm(r) for r in rowsm[m]} for m in order}
-        def seg(rows, lo, hi): return pooled([r for r in rows if lo <= r["stream_index"] <= hi])
-        # per-segment table
-        seg_rows = []
-        for m in order:
-            d1 = seg(rowsm[m],0,9); d2 = seg(rowsm[m],10,19)
-            seg_rows.append([m, f3(d1['acc']), f4(d1['avg']), f2(d1['tps']),
-                             f3(d2['acc']), f4(d2['avg']), f2(d2['tps'])])
-        seg_tbl = table(["方法","D1接受率%","D1平均长度","D1吞吐","D2接受率%","D2平均长度","D2吞吐"], seg_rows)
-        params = ("实验参数:\n"
-                  "  切换流: 10题domain1 + 10题domain2, 在 stream_index=10 切换\n"
-                  "  max-new-tokens: 16384\n  max-length: 32768\n  dtype: float16\n"
-                  "  draft tree: total-token=60, depth=5, top-k=10\n"
-                  "  persistent/p_a 跨切换保留权重/优化器/anchor; reset 每题重置; baseline 不更新\n"
-                  "  p_a: lambda(anchor)=0.01, B=0, m=0; learning-rate=1e-6; seed=0")
-        secs = [f"顺序: {desc}",
-                "一、全流平均指标\n"+abs_table(order, agg),
-                "二、相对基线提升(全流)\n"+rel_table(order, agg, "baseline"),
-                "三、分域指标 (D1=切换前, D2=切换后)\n"+seg_tbl,
-                "四、最大单题提升\n"+max_improve(perq, order, "baseline", keyname="idx"),
-                params]
-        write_file(f"{OUT}/5-switch/{sw}-switch.txt", desc, secs)
-def exp2_summary(path):
-    s = json.load(open(path))
-    return dict(acc=s["acceptance_percent"], avg=s["average_length"],
-                tps=s["tokens_per_second_training_inclusive"], newtok=s["new_tokens"],
-                sec=s["training_inclusive_seconds"], upd=s.get("trace_updated_turns",0),
-                rb=s.get("trace_rolled_back_turns",0))
-def exp2_perq(method_dir):
-    import glob
-    d = {}
-    for f in glob.glob(method_dir+"/blocks/*/infer/turns.jsonl"):
-        for l in open(f):
-            l=l.strip()
-            if not l: continue
-            r=json.loads(l)
-            if r.get("status")!="ok": continue
-            acc=100*r["total_accept_length"]/r["total_drafted_tokens"]
-            avg=r["total_accept_length"]/r["total_steps"]
-            tps=r["new_tokens"]/(r["generation_seconds"]+r.get("reset_seconds",0))
-            d[r["question_id"]]=(acc,avg,tps)
-    return d
+    root = SEL / "runs/streams/pubmedqa100_theoremqa100"
+    for order_id in (0, 1, 2):
+        base = root / f"order_{order_id}"
+        mapping = {"baseline": "baseline", "Reset": "reset_f1", "P": "p_f1", "P+A": "p_a"}
+        groups = paths(base, mapping)
+        target = OUT / f"5-switch/pubmedqa100-theoremqa100-order{order_id}-switch.txt"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        body = sections(groups, list(mapping), extra=switch_segments)
+        body.append(parameters(manifests(base, mapping), list(mapping)))
+        target.write_text(f"dataset: PubMedQA100 -> TheoremQA100 order {order_id}\n显卡: {GPU}\n\n" +
+                          "\n\n".join(body) + "\n", encoding="utf-8")
+        GENERATED.append(target)
 
-def gen_osd():
-    mnt = {"AIME-2025":"8192", "LongBench-Write":"16384"}
-    groups = [("osd", "EAGLE3+OSD", "EAGLE3+OSD+TraceDraft", "osd", "osd_tracedraft"),
-              ("onlinespec", "ENS-EAGLE3(hedge)", "ENS-EAGLE3+TraceDraft", "onlinespec", "onlinespec_trace")]
-    for ds, slug in DS.items():
-        secs = []
-        for gi,(grp, blab, tlab, bsub, tsub) in enumerate(groups):
-            gd = f"{ROOT}/exp2/deepseek_r1_distill_llama_8b/{ds}/seed_0/{grp}"
-            agg = {blab: exp2_summary(f"{gd}/{bsub}/summary.json"),
-                   tlab: exp2_summary(f"{gd}/{tsub}/summary.json")}
-            order = [blab, tlab]
-            abst = abs_table(order, agg)
-            relt = rel_table(order, agg, blab)
-            perq = {blab: exp2_perq(f"{gd}/{bsub}"), tlab: exp2_perq(f"{gd}/{tsub}")}
-            mx = max_improve(perq, order, blab, keyname="qid")
-            upd = agg[tlab]['upd']; rb = agg[tlab]['rb']
-            secs.append(f"{'一二三四五'[gi]}、{grp} 组\n{abst}\n"
-                        f"  ({tlab} 更新/回退: {upd}/{rb})\n\n相对基准提升\n{relt}\n\n最大单题提升\n{mx}")
-        params = ("实验参数:\n"
-                  f"  max-new-tokens: {mnt[ds]}\n  max-length: 32768\n  dtype: float16\n"
-                  "  draft tree: total-token=60, depth=5, top-k=10\n"
-                  "  block-size=5, --no-train-last-block\n"
-                  "  TraceDraft=Reset lr=1e-5 (update_round=5)\n"
-                  "  OnlineSPEC: hedge temp=0.2, LR 2e-4/1e-4/4e-4, R/A=0\n  seed=0, questions=0..20")
-        secs.append(params)
-        write_file(f"{OUT}/2-osd-onlineSpec/{slug}-osd-onlineSpec.txt", ds, secs)
+
+def gen_frequency():
+    aime = SEL / "side/runs/aime_2024"
+    groups = {
+        "baseline": complete_rows(aime / "baseline/stats.jsonl")[:20],
+        "every1": complete_rows(aime / "persistent.attempt_02/stats.jsonl")[:20],
+        "every8": complete_rows(FOLLOW / "runs/aime/frequency/persistent_every8/attempt_01/stats.jsonl"),
+        "every16": complete_rows(FOLLOW / "runs/aime/frequency/persistent_every16/attempt_01/stats.jsonl"),
+    }
+    mfs = [aime / "baseline/manifest.json", aime / "persistent.attempt_02/manifest.json",
+           FOLLOW / "runs/aime/frequency/persistent_every8/attempt_01/manifest.json",
+           FOLLOW / "runs/aime/frequency/persistent_every16/attempt_01/manifest.json"]
+    report("6-frequecy/aime-2024-frequency.txt", "AIME-2024", groups,
+           ["baseline", "every1", "every8", "every16"], mfs)
+
+
+def gen_prefix():
+    root = FOLLOW / "runs/aime/prefix_source"
+    mapping = {"current": "current_verified_prefix", "causal prior": "prior_verified_prefix_shuffled"}
+    base = root / mapping["current"] / "attempt_01"
+    prior = root / mapping["causal prior"] / "attempt_01"
+    report("7-prefix/aime-2024-prefix.txt", "AIME-2024",
+           {"current": complete_rows(base / "stats.jsonl"),
+            "causal prior": complete_rows(prior / "stats.jsonl")},
+           ["current", "causal prior"], [base / "manifest.json", prior / "manifest.json"],
+           base="current")
+
+
+def validate():
+    forbidden = ("p_r", "p+r", "p＋r", "p_r_a", "exactness", "精确性", "pending", "failed",
+                 "unfinished", "未完成", "失败", "osd", "onlinespec")
+    for path in GENERATED:
+        text = path.read_text(encoding="utf-8")
+        lines = text.splitlines()
+        if len(lines) < 2 or not lines[0].startswith("dataset: ") or lines[1] != f"显卡: {GPU}":
+            raise AssertionError(f"bad header: {path}")
+        lowered = text.lower()
+        hits = [item for item in forbidden if item in lowered]
+        if hits:
+            raise AssertionError(f"forbidden text {hits}: {path}")
+    return len(GENERATED), len(PARSED)
+
+
+def main():
+    gen_basic()
+    gen_pa()
+    gen_freeze()
+    gen_switch()
+    gen_frequency()
+    gen_prefix()
+    reports, sources = validate()
+    print(f"generated={reports} parsed_sources={sources}")
+    for path in GENERATED:
+        print(path)
+
 
 if __name__ == "__main__":
-    gen_basic(); gen_pa(); gen_freeze(); gen_switch(); gen_osd()
-
-
-
-
+    main()

@@ -1,0 +1,44 @@
+dataset: PubMedQA100 -> TheoremQA100 order 2
+显卡: NVIDIA A800
+
+一、平均指标
+方法           接受率%        平均接受长度      吞吐速度(tok/s)      吞吐总量(tok)    时间(s)
+--------  -------  ------------  ---------------  -------------  -------
+baseline   60.120        4.1947            99.59         184715   1854.7
+Reset      60.113        4.1941            97.04         184874   1905.1
+P          60.199        4.2010            95.66         183542   1918.7
+P+A        60.245        4.2035            96.48         184365   1911.0
+
+二、相对基线提升
+对比                      接受率提升%        平均长度提升%      吞吐提升%
+-----------------  -----------  -------------  ---------
+Reset vs baseline        -0.01          -0.01      -2.56
+P vs baseline            +0.13          +0.15      -3.95
+P+A vs baseline          +0.21          +0.21      -3.13
+
+三、最大单题提升
+指标               方法    题号       基线      实验值      相对提升%
+------------  -----  ----  -------  -------  ---------
+接受率           Reset    66  52.9064  60.0642     +13.53
+平均接受长度        Reset    66   3.6781   4.1866     +13.82
+吞吐速度          Reset    66  89.2759  96.6249      +8.23
+
+四、分段指标
+方法                 数据段     接受率%        平均接受长度      吞吐速度(tok/s)
+--------  ------------  -------  ------------  ---------------
+baseline   PubMedQA100   53.732        3.7449            91.18
+baseline  TheoremQA100   66.464        4.6425           107.94
+Reset      PubMedQA100   53.824        3.7510            88.60
+Reset     TheoremQA100   66.352        4.6348           105.48
+P          PubMedQA100   53.812        3.7511            87.14
+P         TheoremQA100   66.441        4.6418           104.06
+P+A        PubMedQA100   53.893        3.7559            87.57
+P+A       TheoremQA100   66.498        4.6453           105.40
+
+实验参数
+方法        max_new_tokens  max_length    dtype  total_token  depth  top_k  seed  learning_rate    source  prompt_weight  max_prompt_positions  max_response_positions  warmup_steps  update_every  train_steps      scope    precision  validation_fraction  gradient_clip  max_step_drift      anchor_weight  replay_mib  replay_positions  max_successful_updates
+--------  --------------  ----------  -------  -----------  -----  -----  ----  -------------  --------  -------------  --------------------  ----------------------  ------------  ------------  -----------  ---------  -----------  -------------------  -------------  --------------  -----------------  ----------  ----------------  ----------------------
+baseline            1024        4096  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02                0.0         0.0                 0                    None
+Reset               1024        4096  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02                0.0         0.0                 0                    None
+P                   1024        4096  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02                0.0         0.0                 0                    None
+P+A                 1024        4096  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02  49183.11259820001         0.0                 0                    None
