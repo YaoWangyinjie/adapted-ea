@@ -1,0 +1,32 @@
+dataset: LiveCodeBench
+显卡: NVIDIA A800
+
+一、平均指标
+方法           接受率%        平均接受长度      吞吐速度(tok/s)      吞吐总量(tok)    时间(s)
+--------  -------  ------------  ---------------  -------------  -------
+baseline   17.368        0.7802            21.29         312093  14657.7
+every1     17.980        0.8215            21.80         305371  14008.1
+every8     18.345        0.8460            21.48         317923  14800.5
+every16    18.236        0.8371            21.37         318056  14881.5
+
+二、相对基线提升
+对比                        接受率提升%        平均长度提升%      吞吐提升%
+-------------------  -----------  -------------  ---------
+every1 vs baseline         +3.52          +5.30      +2.38
+every8 vs baseline         +5.63          +8.43      +0.89
+every16 vs baseline        +5.00          +7.29      +0.38
+
+三、最大单题提升
+指标                 方法    题号       基线      实验值      相对提升%
+------------  -------  ----  -------  -------  ---------
+接受率           every16     0  17.9913  27.5764     +53.28
+平均接受长度         every8     0   0.8114   1.4774     +82.08
+吞吐速度           every1     0  21.3196  40.3494     +89.26
+
+实验参数
+方法        max_new_tokens  max_length    dtype  total_token  depth  top_k  seed  learning_rate    source  prompt_weight  max_prompt_positions  max_response_positions  warmup_steps  update_every  train_steps      scope    precision  validation_fraction  gradient_clip  max_step_drift  anchor_weight  replay_mib  replay_positions  max_successful_updates
+--------  --------------  ----------  -------  -----------  -----  -----  ----  -------------  --------  -------------  --------------------  ----------------------  ------------  ------------  -----------  ---------  -----------  -------------------  -------------  --------------  -------------  ----------  ----------------  ----------------------
+baseline           16384       18432  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                    None
+every1             16384       18432  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                    None
+every8             16384       18432  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             8            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                    None
+every16            16384       18432  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5            16            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                    None
