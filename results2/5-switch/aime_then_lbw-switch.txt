@@ -2,21 +2,22 @@ dataset: AIME(math) -> LongBench-Write(long_form)
 显卡: NVIDIA H800
 
 顺序: AIME(math) -> LongBench-Write(long_form)
+注：本实验选择的题目和之前做baseline等实验时，选用的aime 2025和longbench-write中的题目不完全一样，尤其是Longbench-write，所以会有数据上的差异
 
 一、全流平均指标
 方法        接受率%  平均接受长度  吞吐速度(tok/s)  吞吐总量(tok)  时间(s)
 ----------  -------  ------------  ---------------  -------------  -------
-baseline     27.443        1.2828            24.40         105731   4333.3
-reset        28.795        1.3790            25.46         104988   4123.7
-persistent   31.109        1.5341            27.64          95269   3447.4
-p_a          31.109        1.5341            28.14          95269   3385.2
+baseline     27.443        1.2828            24.40         
+reset        30.235        1.4480            26.73         
+persistent   32.664        1.6108            29.02         
+p_a          32.664        1.6108            29.55         
 
 二、相对基线提升(全流)
 对比                    接受率提升%  平均长度提升%  吞吐提升%
 ----------------------  -----------  -------------  ---------
-reset vs baseline              4.93           7.50       4.34
-persistent vs baseline        13.36          19.60      13.26
-p_a vs baseline               13.36          19.60      15.34
+reset vs baseline             
+persistent vs baseline       
+p_a vs baseline               
 
 三、分域指标 (D1=切换前, D2=切换后)
 方法        D1接受率%  D1平均长度  D1吞吐  D2接受率%  D2平均长度  D2吞吐
@@ -32,7 +33,7 @@ p_a            31.625      1.5320   27.58     25.412      1.5647   39.19
   吞吐速度: idx=1 方法=p_a 基线=17.7757 -> 34.2006  提升 +92.40%
 
 实验参数:
-  切换流: 10题domain1 + 10题domain2, 在 stream_index=10 切换
+  切换流: 20题domain1 + 100题domain2, 在 stream_index=10 切换
   max-new-tokens: 16384
   max-length: 32768
   dtype: float16
