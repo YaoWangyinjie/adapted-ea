@@ -1,0 +1,46 @@
+dataset: AIME-2025
+显卡: NVIDIA H800
+
+一、osd 组
+方法                   接受率%  平均接受长度  吞吐速度(tok/s)  吞吐总量(tok)  时间(s)
+---------------------  -------  ------------  ---------------  -------------  -------
+EAGLE3+OSD              46.413        2.7364            38.37         149934   3908.0
+EAGLE3+OSD+TraceDraft   44.138        2.6280            54.14         146168   2699.9
+  (EAGLE3+OSD+TraceDraft 更新/回退: 14/6)
+
+相对基准提升
+对比                                 接受率提升%  平均长度提升%  吞吐提升%
+-----------------------------------  -----------  -------------  ---------
+EAGLE3+OSD+TraceDraft vs EAGLE3+OSD        -4.90          -3.96      41.11
+
+最大单题提升
+  接受率: qid=16 方法=EAGLE3+OSD+TraceDraft 基线=60.4621 -> 80.3486  提升 +32.89%
+  平均接受长度: qid=16 方法=EAGLE3+OSD+TraceDraft 基线=4.0970 -> 5.6244  提升 +37.28%
+  吞吐速度: qid=16 方法=EAGLE3+OSD+TraceDraft 基线=67.9229 -> 174.8016  提升 +157.35%
+
+二、onlinespec 组
+方法                   接受率%  平均接受长度  吞吐速度(tok/s)  吞吐总量(tok)  时间(s)
+---------------------  -------  ------------  ---------------  -------------  -------
+ENS-EAGLE3(hedge)       37.729        2.3000            23.79         144437   6070.8
+ENS-EAGLE3+TraceDraft   39.158        2.3707            23.46         147008   6267.6
+  (ENS-EAGLE3+TraceDraft 更新/回退: 19/1)
+
+相对基准提升
+对比                                        接受率提升%  平均长度提升%  吞吐提升%
+------------------------------------------  -----------  -------------  ---------
+ENS-EAGLE3+TraceDraft vs ENS-EAGLE3(hedge)         3.79           3.07      -1.42
+
+最大单题提升
+  接受率: qid=24 方法=ENS-EAGLE3+TraceDraft 基线=26.5088 -> 43.4150  提升 +63.78%
+  平均接受长度: qid=24 方法=ENS-EAGLE3+TraceDraft 基线=1.8514 -> 3.0020  提升 +62.15%
+  吞吐速度: qid=16 方法=ENS-EAGLE3+TraceDraft 基线=56.1362 -> 78.3613  提升 +39.59%
+
+实验参数:
+  max-new-tokens: 8192
+  max-length: 32768
+  dtype: float16
+  draft tree: total-token=60, depth=5, top-k=10
+  block-size=5, --no-train-last-block
+  TraceDraft=Reset lr=1e-5 (update_round=5)
+  OnlineSPEC: hedge temp=0.2, LR 2e-4/1e-4/4e-4, R/A=0
+  seed=0, questions=0..20

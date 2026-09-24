@@ -1,0 +1,29 @@
+dataset: LongBench-Write
+显卡: NVIDIA H800
+
+一、平均指标
+方法        接受率%  平均接受长度  吞吐速度(tok/s)  吞吐总量(tok)  时间(s)
+----------  -------  ------------  ---------------  -------------  -------
+baseline     26.066        1.4733            18.43          47567   2580.8
+Reset        28.203        1.5783            19.79          32123   1622.9
+Persistent   17.467        0.8752            14.05          47025   3346.3
+
+二、相对基线提升
+对比                    接受率提升%  平均长度提升%  吞吐提升%
+----------------------  -----------  -------------  ---------
+Reset vs baseline              8.20           7.12       7.39
+Persistent vs baseline       -32.99         -40.60     -23.76
+
+三、最大单题提升
+  接受率: qid=10 方法=Reset 基线=22.4892 -> 46.0074  提升 +104.57%
+  平均接受长度: qid=10 方法=Reset 基线=1.2982 -> 3.1737  提升 +144.47%
+  吞吐速度: qid=10 方法=Reset 基线=16.2034 -> 40.3404  提升 +148.96%
+
+实验参数:
+  max-new-tokens: 16384
+  max-length: 32768
+  dtype: float16
+  draft tree: total-token=60, depth=5, top-k=10
+  scope: head_only  precision: master_fp32  warmup-steps=5, update-every=1, train-steps=1
+  learning-rate: Reset=1e-5, Persistent=1e-6
+  seed=0, questions=0..20
