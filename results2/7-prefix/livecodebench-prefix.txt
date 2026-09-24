@@ -1,0 +1,26 @@
+dataset: LiveCodeBench
+显卡: NVIDIA A800
+
+一、平均指标
+方法               接受率%        平均接受长度      吞吐速度(tok/s)      吞吐总量(tok)    时间(s)
+------------  -------  ------------  ---------------  -------------  -------
+current        33.697        1.9561            52.42           4715     89.9
+causal prior   17.991        0.8114            21.08          16384    777.3
+
+二、相对基线提升
+对比                            接受率提升%        平均长度提升%      吞吐提升%
+-----------------------  -----------  -------------  ---------
+causal prior vs current       -46.61         -58.52     -59.79
+
+三、最大单题提升
+指标                      方法    题号       基线      实验值      相对提升%
+------------  ------------  ----  -------  -------  ---------
+接受率           causal prior     0  33.6969  17.9913     -46.61
+平均接受长度        causal prior     0   1.9561   0.8114     -58.52
+吞吐速度          causal prior     0  52.4215  21.0770     -59.79
+
+实验参数
+方法            max_new_tokens  max_length    dtype  total_token  depth  top_k  seed  learning_rate    source  prompt_weight  max_prompt_positions  max_response_positions  warmup_steps  update_every  train_steps      scope    precision  validation_fraction  gradient_clip  max_step_drift  anchor_weight  replay_mib  replay_positions  max_successful_updates
+------------  --------------  ----------  -------  -----------  -----  -----  ----  -------------  --------  -------------  --------------------  ----------------------  ------------  ------------  -----------  ---------  -----------  -------------------  -------------  --------------  -------------  ----------  ----------------  ----------------------
+current                16384       18432  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                    None
+causal prior           16384       18432  float16           60      5     10     0          1e-06  balanced           0.25                   128                     128             5             1            1  head_only  master_fp32                  0.2            0.2            0.02            0.0         0.0                 0                    None
