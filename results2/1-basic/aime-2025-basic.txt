@@ -26,4 +26,3 @@ Persistent vs baseline
   draft tree: total-token=60, depth=5, top-k=10
   scope: head_only  precision: master_fp32  warmup-steps=5, update-every=1, train-steps=1
   learning-rate: Reset=1e-5, Persistent=1e-6
-  seed=0, questions=0..20
