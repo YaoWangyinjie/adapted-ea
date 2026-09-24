@@ -1,0 +1,47 @@
+dataset: AIME-2024
+显卡: NVIDIA A800
+
+一、平均指标
+方法                 接受率%        平均接受长度      吞吐速度(tok/s)      吞吐总量(tok)    时间(s)
+--------------  -------  ------------  ---------------  -------------  -------
+OSD              36.383        1.7496            45.48          36373    799.7
+OSD+TraceDraft   37.083        1.7711            45.23          36577    808.7
+
+二、相对基线提升
+对比                          接受率提升%        平均长度提升%      吞吐提升%
+---------------------  -----------  -------------  ---------
+OSD+TraceDraft vs OSD        +1.92          +1.22      -0.55
+
+三、最大单题提升
+指标                        方法    题号       基线      实验值      相对提升%
+------------  --------------  ----  -------  -------  ---------
+接受率           OSD+TraceDraft     3  34.6869  36.5093      +5.25
+平均接受长度        OSD+TraceDraft     3   1.8110   1.9091      +5.42
+吞吐速度          OSD+TraceDraft     3  46.0900  47.2804      +2.58
+
+一、平均指标
+方法                        接受率%        平均接受长度      吞吐速度(tok/s)      吞吐总量(tok)    时间(s)
+---------------------  -------  ------------  ---------------  -------------  -------
+OnlineSPEC              37.099        1.7877            46.37          36326    783.4
+OnlineSPEC+TraceDraft   37.824        1.8000            46.56          36577    785.5
+
+二、相对基线提升
+对比                                        接受率提升%        平均长度提升%      吞吐提升%
+-----------------------------------  -----------  -------------  ---------
+OnlineSPEC+TraceDraft vs OnlineSPEC        +1.96          +0.69      +0.42
+
+三、最大单题提升
+指标                               方法    题号       基线      实验值      相对提升%
+------------  ---------------------  ----  -------  -------  ---------
+接受率           OnlineSPEC+TraceDraft     3  35.6552  37.5960      +5.44
+平均接受长度        OnlineSPEC+TraceDraft     2   1.5769   1.6234      +2.95
+吞吐速度          OnlineSPEC+TraceDraft     2  42.5730  43.6475      +2.52
+
+实验参数
+方法                     max_new_tokens  max_length    dtype  total_token  depth  top_k  seed  osd_block_size  osd_lr  osd_epochs  osd_batch_size  osd_unroll  osd_decay  block_size    lr_1    lr_2    lr_3  epochs  batch_size  unroll  decay  hedge_temperature  merge_precision  trace_mode  trace_lr  trace_update_round  trace_every  trace_source  trace_prompt_positions  trace_response_positions
+---------------------  --------------  ----------  -------  -----------  -----  -----  ----  --------------  ------  ----------  --------------  ----------  ---------  ----------  ------  ------  ------  ------  ----------  ------  -----  -----------------  ---------------  ----------  --------  ------------------  -----------  ------------  ----------------------  ------------------------
+OSD                              8192       12288  float16           60      5     10     0               5   1e-05           2               2           7        0.8           -       -       -       -       -           -       -      -                  -                -       reset     1e-05                   5            1      balanced                      64                        64
+OSD+TraceDraft                   8192       12288  float16           60      5     10     0               5   1e-05           2               2           7        0.8           -       -       -       -       -           -       -      -                  -                -       reset     1e-05                   5            1      balanced                      64                        64
+OnlineSPEC                       8192       12288  float16           60      5     10     0               -       -           -               -           -          -           5  0.0002  0.0001  0.0004       2           2       7    0.8                0.2             fp32       reset     1e-05                   5            1      balanced                      64                        64
+OnlineSPEC+TraceDraft            8192       12288  float16           60      5     10     0               -       -           -               -           -          -           5  0.0002  0.0001  0.0004       2           2       7    0.8                0.2             fp32       reset     1e-05                   5            1      balanced                      64                        64
+git -c http.version=HTTP/1.1 push --progress origin main
